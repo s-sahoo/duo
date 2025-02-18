@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- Meta tags for social media banners, these should be filled in appropriatly as they are your "business card" -->
+  <!-- Replace the content tag with appropriate information -->
+  <meta name="description" content="The Diffusion Duality">
+  <meta property="og:title" content="DUO Blog post"/>
+  <meta property="og:description" content="The Diffusion Duality"/>
+  <meta property="og:url" content="https://s-sahoo.com/duo"/>
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
+  <meta property="og:image" content="static/images/duo_schematic.png" />
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+
+  <meta name="twitter:title" content="TWITTER BANNER TITLE META TAG">
+  <meta name="twitter:description" content="TWITTER BANNER DESCRIPTION META TAG">
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
+  <meta name="twitter:image" content="static/images/duo_schematic.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Keywords for your paper to be indexed by-->
+  <meta name="keywords" content="The Diffusion Duality DUO">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <title>Simple and Effective Masked Diffusion Language Models</title>
+  <link rel="icon" type="image/x-icon" href="static/images/ganeshafavicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+  <script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">The Diffusion Duality</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- Paper authors -->
+              <span class="author-block">
+                <a href="https://s-sahoo.github.io" target="_blank">Subham Sahoo</a>,</span>
+                <span class="author-block">
+                  <a href="https://jdeschena.github.io" target="_blank">Justin Deschenaux</a>,</span>
+                  <span class="author-block">
+                    <a href="https://skylion007.github.io" target="_blank">Aaron Gokaslan</a>,</span>
+                      <span class="author-block">
+                        <a href="https://tech.cornell.edu/people/guanghan-wang/" target="_blank">Guanghan Wang</a>,</span>
+                        <span class="author-block">
+                          <a href="https://justinchiu.netlify.app" target="_blank">Justin Chiu</a>,</span>
+                            <span class="author-block">
+                              <a href="https://www.cs.cornell.edu/~kuleshov/" target="_blank">Volodymyr Kuleshov</a>
+                  </span>
+                  </div>
+
+                  <div class="is-size-5 publication-authors">
+                    <span class="author-block">
+                      Cornell Tech, NY.
+                      <!-- <br> <b >NeurIPS 2024</b> -->
+                    </span>
+                    
+                  </div>
+
+                  <div class="column has-text-centered">
+                    <div class="publication-links">
+
+
+                        <!-- ArXiv abstract Link -->
+                        <span class="link-block">
+                          <a href="https://arxiv.org/abs/2406.07524" target="_blank"
+                          class="external-link button is-normal is-rounded is-dark">
+                          <span class="icon">
+                            <i class="ai ai-arxiv"></i>
+                            </span>
+                            <span>arXiv</span>
+                          </a>
+                        </span>
+
+                        <!-- YouTube Link -->
+                        <!-- <span class="link-block">
+                          <a href="https://youtu.be/WjAUX23vgfg?si=9iZIeclrpY1P5e95" target="_blank"
+                          class="external-link button is-normal is-rounded is-dark">
+                          <span class="icon">
+                            <i class="fab fa-youtube" style="color: #cb422a;"></i>
+                            </span>
+                            <span>YouTube</span>
+                          </a>
+                        </span> -->
+
+                        <!-- Github link -->
+                        <span class="link-block">
+                          <a href="https://github.com/s-sahoo/duo" target="_blank"
+                          class="external-link button is-normal is-rounded is-dark">
+                          <span class="icon">
+                            <i class="fab fa-github"></i>
+                          </span>
+                          <span>Code</span>
+                          </a>
+                        </span>
+
+                        <!-- Google Colab Link -->
+                        <span class="link-block">
+                          <a href="https://colab.research.google.com/drive/1Sf7R-dqdR6gq-H8nyZ9E3ZkyvqMTqcwq?usp=sharing" target="_blank"
+                          class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon">
+                              <img src="https://colab.research.google.com/img/colab_favicon.ico" alt="Colab Logo" style="width: 18px; height: 18px;">
+                            </span>
+                            <span>Colab</span>
+                          </a>
+                        </span>
+
+                        <!-- HuggingFace link -->
+                        <span class="link-block">
+                          <a href="https://huggingface.co/subbham/duo" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                            <span class="icon">
+                              <p>&#129303;</p>
+                            </span>
+                            <span>HuggingFace</span>
+                          </a>
+                        </span>
+                        </a>
+                      </span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Teaser video-->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div style="text-align: center;">
+        <img src="static/images/duo_schematic.png" alt="MY ALT TEXT" style="width: 65%; height: auto;"/>
+      </div>
+      <h4 class="subtitle has-text-centered">
+        An illustration of uniform state discrete diffusion (top) and
+        the underlying Gaussian diffusion (bottom). While both are separate Markov processes,
+        applying \(\argmax\) maps Gaussian latents \(\mathbf{w}_t \in \mathbb{R}^n\) to discrete latents
+        \(\mathbf{z}_t \in \mathcal{V}\), transforming their marginals from
+        \(\tilde{q}(.|\mathbf{x}; \tilde{\alpha}_t)\)~\Eqn{eqn:gaussian_marginal}
+        to \(q_t(.|\mathbf{x}; \mathcal{T}(\tilde{\alpha}_t))\)~\Eqn{eqn:discrete_marginal} and adjusting diffusion parameters from \(\tilde{\alpha}_t\)
+        to \(\alpha_t = \mathcal{T}(\tilde{\alpha}_t)\)~\Eqn{eqn:coefficient_relation}. The ELBOs of both processes are related by \Eqn{eqn:elbo_inequality}.
+      </h4>
+      <img src="static/images/output.gif" width="100%" alt="A descriptive text for the GIF" >
+      <h4 class="subtitle has-text-centered">
+        The sample generation process begins with a sequence of all masked tokens. MDLM then replaces these masked tokens with actual tokens in a random order.
+      </h4>
+      <!-- <iframe width="100%" height="500"
+      src="https://www.youtube.com/embed/WjAUX23vgfg">
+      </iframe>
+      <h4 class="subtitle has-text-centered">
+        A <em>Simple and Effective</em> tutorial on our paper by <a href="https://www.youtube.com/@srush_nlp">Sasha Rush</a>.
+      </h4> -->
+    </div>
+  </div>
+</section>
+<!-- End teaser video -->
+
+
+
+<!-- Paper abstract -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Discrete diffusions models have been demonstrated to be surprisingly strong language models.
+            In this work, we show that discrete diffusion language models can be further improved by adapting
+            methods from continuous-state diffusion models. We establish a core property of uniform state diffusion:
+            it stems from an underlying Gaussian diffusion process. This property allows us to improve both training
+            by utilizing a curriculum learning strategy that reduces training variance and leads to \(\mathbf{2\times}\)
+            faster convergence, as well as sampling by adapting efficient distillation methods from continuous-state diffusion models.
+            As a result,  models surpass an autoregressive model's zero-shot perplexity on
+            3 out of 7 benchmarks and we manage to reduce the sampling steps by \(\textbf{2 orders of magnitude}\) while preserving sample quality.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End paper abstract -->
+
+<!-- Diffusion Models -->
+<section class="section" id="DiffusionModels">
+  <div class="container is-max-desktop">
+  <div class="content is-medium">
+    <h2 class="title">Introduction</h2>
+    <p>An eternal theme in mathematics is that discreteness emerges from underlying continuity.
+      From quantum mechanics, where the quantized energy states of electrons arise as solutions
+      to continuous wave equations, to the Fourier decomposition of the Heaviside function,
+      which results in a trigonometric series, and to the binary logic of digital circuits,
+      fundamentally driven by smooth analog currents, discreteness has repeatedly and naturally
+      emerged from an underlying continuum. Our work continues this tradition by demonstrating
+      that a discrete diffusion process is, in fact, an emergent phenomenon of an underlying
+      continuous Gaussian diffusion process. This perspective enables the design of faster
+      training and sampling algorithms for discrete diffusion models.</p>
+
+    <p>[TODO] Diffusion models excel at producing realistic, high-quality images and have
+      received significant attention as potential tools for generating discrete data such as text,
+      biological sequences, and graphs. Unlike autoregressive (AR) approaches,
+      diffusion-based methods are not constrained to generate data sequentially, and therefore have
+      the potential to improve long-term planning, controllable generation, and sampling speed. However,
+      discrete diffusion methods exhibit a performance gap relative to AR models, especially in language modeling.
+      The standard measure of language modeling performance is log-likelihood: when controlling for parameter count,
+      prior work reports a sizable log-likelihood gap between AR and diffusion models.
+    </p>
+  <!-- Continuous Diffusion -->  
+    <h4 class="subtitle">Gaussiasn Diffusion</h3>
+    <p>[TODO]
+      Diffusion models are trained to iteratively undo a forward corruption process  q  that corrupts the clean data  $\mathbf{x} \in \mathbb{R}^{n}$  by adding Gaussian noise. In the reverse generation process, the trained model iteratively denoises the Gaussian noise to generate clean inputs that correspond to the input data distribution.
+    </p>
+    
+    <!-- Discrete Diffusion -->
+    <h4 class="subtitle">Discrete Diffusion</h3>
+    <p>[TODO]
+      Applications of diffusion modeling to discrete data can be categorized into two broad areas. The first involves embedding discrete structures in continuous space and then performing the Gaussian diffusion defined above on these continuous representations. More related to our method are works that define a diffusion process directly on discrete structures. <a href="https://arxiv.org/abs/2107.03006">D3PM </a> introduces a framework with a Markov forward process \( q(z_t|z_{t−1}) = \text{Cat}(z_t; Q_t z_{t−1}) \), defined by the multiplication of matrices \( Q_t \in \mathbb{R}^{n \times n} \) over \( T \) discrete time steps. The matrix \( Q_t \) is designed such that \( Q_T \cdot Q_{T-1} \cdots Q_1 \mathbf{x} \) converges to a stationary distribution.
+    </p>
+  </div>
+  </div>
+
+</section>
+<!-- End Diffusion Models -->
+
+<!-- Simple Masked Diffusion Models -->
+<section class="section" id="SimpleMaskedDiffusionModels">
+  <div class="container is-max-desktop">
+  <div class="content is-medium">
+    <h2 class="title">The Diffusion Duality</h2>
+    <p>[TODO] Equivalence of Marginals, ELBO relation.</p>
+    <h4 class="subtitle">Marginals</h4>
+    <p>TODO</p>
+    
+    <h4>ELBO</h4>
+    <p> TODO </p>
+    <h4>Application (1 / 2): Curriculum Learning</h4>
+    <p>
+      <!-- Note that the Negative Evidence Lower Bound (NELBO) takes the following form for a diffusion model: \( \mathcal{L}_{\text{reconstruction}} + \mathcal{L}_{\text{diffusion}} + \mathcal{L}_{\text{prior}}\). As described in the paper, SUBS parameterization reduces the  \( \mathcal{L}_{\text{reconstruction}} \) to \(0\) and \(\alpha_{t = 1} = 0\) ensures that  \( \mathcal{L}_{\text{prior}} = 0 \). -->
+      For a sequence \(\mathbf{x}^{1: L}\) of length \(L\), SUBS parameterization simplifies the Negative Evidence Lower Bound (NELBO) to the following:
+      \begin{align}
+          \mathcal{L}_{\text{NELBO}}^\infty = \mathbb{E}_{q}\int_{t=0}^{t=1} \frac{\alpha_{t}'}{1 - \alpha_t} \sum_{\ell = 1}^{L} \log \langle \mathbf {x}_\theta^\ell(\mathbf{z}_t), \mathbf{x}^\ell \rangle \text{d} t
+      \end{align}
+      where \(\alpha_{t}'\) denotes the time derivative of \(\alpha_{t}\). As shown in the table below, MDLM outperforms the previous diffusion models and nearly matches the performance of AR models in text generation on the LM1B dataset.
+
+      <br>
+      <br>
+      We also explore models' ability to generalize by taking models trained on OWT and evaluating how well they model unseen datasets.
+      We compare the zero-shot perplexities of MDLM with SEDD and an AR Transformer language model on the validation splits of Penn Tree Bank (PTB), Wikitext, LM1B, Lambada, AG News, and Scientific Papers (Pubmed and Arxiv subsets).
+      MDLM consistently outperforms SEDD.
+      In some cases, e.g., for Lambada and Scientific Papers, MDLM attains better perplexity than AR.
+      We hypothesize that these datasets are farther from OWT, and that diffusion models may be more robust to out-of-domain evaluation due to the unmasking-based objective.
+      <br>
+      <!-- <table>
+        <caption><em>Zero-shot validation perplexities ( &darr;) of models trained for 524B tokens on OpenWebText.
+          All perplexities for diffusion models are upper bounds.</em></caption>
+        <tr>
+          <th></th>
+          <th>PTB</th>
+          <th>Wikitext</th>
+          <th>LM1B</th>
+          <th>Lambada</th>
+          <th>AG News</th>
+          <th>Pubmed</th>
+          <th>Arxiv</th>
+        </tr>
+        <tr>
+          <td>AR (Retrained)</td>
+          <td><strong>82.05</strong></td>
+          <td><strong>25.75</strong></td>
+          <td><strong>51.25</strong></td>
+          <td>51.28</td>
+          <td><strong>52.09</strong></td>
+          <td>49.01</td>
+          <td>41.73</td>
+        </tr>
+        <tr>
+          <td>SEDD (Retrained)</td>
+          <td>100.09</td>
+          <td>34.28</td>
+          <td>68.20</td>
+          <td>49.86</td>
+          <td>62.09</td>
+          <td>44.53</td>
+          <td>38.48</td>
+        </tr>
+        <tr>
+          <td><strong>MDLM (Ours)</strong></td>
+          <td>95.26</td>
+          <td>32.83</td>
+          <td>67.01</td>
+          <td><strong>47.52</strong></td>
+          <td>61.15</td>
+          <td><strong>41.89</strong></td>
+          <td><strong>37.37</strong></td>
+        </tr>
+      </table> -->
+    </p>
+    <h4>Application (2 / 2): Distillation</h4>
+    <p> TODO</p>
+
+    </div>
+  </div>
+</section>
+<!-- End Diffusion Models -->
+
+
+<!-- Paper poster -->
+<!-- <section class="hero is-small is-light">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title">Poster</h2>
+
+      <iframe  src="static/pdfs/MDLM-NeurIPS.pdf" width="100%" height="940">
+          </iframe>
+        
+      </div>
+    </div>
+  </section> -->
+<!--End paper poster -->
+
+
+<!--BibTex citation -->
+  <!-- <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>@misc{sahoo2024simple,
+      title={Simple and Effective Masked Diffusion Language Models}, 
+      author={Subham Sekhar Sahoo and Marianne Arriola and Yair Schiff and Aaron Gokaslan and Edgar Marroquin and Justin T Chiu and Alexander Rush and Volodymyr Kuleshov},
+      year={2024},
+      eprint={2406.07524},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+  }</code></pre>
+    </div>
+</section> -->
+<!--End BibTex citation -->
+
+
+  <footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            You are free to borrow the of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Statcounter tracking code -->
+  
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+  </body>
+</html>
