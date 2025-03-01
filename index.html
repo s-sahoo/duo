@@ -14,7 +14,7 @@
   <meta property="og:image:height" content="630"/>
 
 
-  <meta name="twitter:title" content="TWITTER BANNER TITLE META TAG">
+  <meta name="twitter:title" content="The Diffusion Duality">
   <meta name="twitter:description" content="TWITTER BANNER DESCRIPTION META TAG">
   <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
   <meta name="twitter:image" content="static/images/duo_schematic.png">
@@ -76,7 +76,7 @@
                   <div class="is-size-5 publication-authors">
                     <span class="author-block">
                       Cornell Tech, NY.
-                      <!-- <br> <b >NeurIPS 2024</b> -->
+                      <br> <b >[The website will be ready by March 15, 2025.]</b>
                     </span>
                     
                   </div>
@@ -159,18 +159,24 @@
         <img src="static/images/duo_schematic.png" alt="MY ALT TEXT" style="width: 65%; height: auto;"/>
       </div>
       <h4 class="subtitle has-text-centered">
-        [TODO] An illustration of uniform state discrete diffusion (top) and
+        An illustration of uniform state discrete diffusion (top) and
         the underlying Gaussian diffusion (bottom). While both are separate Markov processes,
-        applying \(\argmax\) maps Gaussian latents \(\mathbf{w}_t \in \mathbb{R}^n\) to discrete latents
+        applying \(\texttt{arg max}\) maps Gaussian latents \(\mathbf{w}_t \in \mathbb{R}^n\) to discrete latents
         \(\mathbf{z}_t \in \mathcal{V}\), transforming their marginals from
-        \(\tilde{q}(.|\mathbf{x}; \tilde{\alpha}_t)\)~\Eqn{eqn:gaussian_marginal}
-        to \(q_t(.|\mathbf{x}; \mathcal{T}(\tilde{\alpha}_t))\)~\Eqn{eqn:discrete_marginal} and adjusting diffusion parameters from \(\tilde{\alpha}_t\)
-        to \(\alpha_t = \mathcal{T}(\tilde{\alpha}_t)\)~\Eqn{eqn:coefficient_relation}. The ELBOs of both processes are related by \Eqn{eqn:elbo_inequality}.
+        \(\tilde{q}_t(.|\mathbf{x}; \tilde{\alpha}_t)\)
+        <!-- ~\Eqn{eqn:gaussian_marginal} -->
+        to \(q_t(.|\mathbf{x}; \mathcal{T}(\tilde{\alpha}_t))\)
+        <!-- ~\Eqn{eqn:discrete_marginal} -->
+        and adjusting diffusion parameters from \(\tilde{\alpha}_t\)
+        to \(\alpha_t = \mathcal{T}(\tilde{\alpha}_t)\)
+        <!-- ~\Eqn{eqn:coefficient_relation} -->
+        .
+        <!-- The ELBOs of both processes are related by \Eqn{eqn:elbo_inequality}. -->
       </h4>
-      <img src="static/images/output.gif" width="100%" alt="A descriptive text for the GIF" >
-      <h4 class="subtitle has-text-centered">
+      <!-- <img src="static/images/output.gif" width="100%" alt="A descriptive text for the GIF" > -->
+      <!-- <h4 class="subtitle has-text-centered">
         The sample generation process begins with a sequence of all masked tokens. MDLM then replaces these masked tokens with actual tokens in a random order.
-      </h4>
+      </h4> -->
       <!-- <iframe width="100%" height="500"
       src="https://www.youtube.com/embed/WjAUX23vgfg">
       </iframe>
@@ -199,7 +205,7 @@
             by utilizing a curriculum learning strategy that reduces training variance and leads to \(\mathbf{2\times}\)
             faster convergence, as well as sampling by adapting efficient distillation methods from continuous-state diffusion models.
             As a result,  models surpass an autoregressive model's zero-shot perplexity on
-            3 out of 7 benchmarks and we manage to reduce the sampling steps by \(\textbf{2 orders of magnitude}\) while preserving sample quality.
+            3 out of 7 benchmarks and we manage to reduce the sampling steps by \(\textbf{two orders}\) of magnitude while preserving sample quality.
           </p>
         </div>
       </div>
@@ -223,7 +229,7 @@
       continuous Gaussian diffusion process. This perspective enables the design of faster
       training and sampling algorithms for discrete diffusion models.</p>
 
-    <p>[TODO] Diffusion models excel at producing realistic, high-quality images and have
+    <!-- <p>[TODO] Diffusion models excel at producing realistic, high-quality images and have
       received significant attention as potential tools for generating discrete data such as text,
       biological sequences, and graphs. Unlike autoregressive (AR) approaches,
       diffusion-based methods are not constrained to generate data sequentially, and therefore have
@@ -231,17 +237,17 @@
       discrete diffusion methods exhibit a performance gap relative to AR models, especially in language modeling.
       The standard measure of language modeling performance is log-likelihood: when controlling for parameter count,
       prior work reports a sizable log-likelihood gap between AR and diffusion models.
-    </p>
+    </p> -->
   <!-- Continuous Diffusion -->  
     <h4 class="subtitle">Gaussiasn Diffusion</h3>
     <p>[TODO]
-      Diffusion models are trained to iteratively undo a forward corruption process  q  that corrupts the clean data  $\mathbf{x} \in \mathbb{R}^{n}$  by adding Gaussian noise. In the reverse generation process, the trained model iteratively denoises the Gaussian noise to generate clean inputs that correspond to the input data distribution.
+      <!-- Diffusion models are trained to iteratively undo a forward corruption process  q  that corrupts the clean data  $\mathbf{x} \in \mathbb{R}^{n}$  by adding Gaussian noise. In the reverse generation process, the trained model iteratively denoises the Gaussian noise to generate clean inputs that correspond to the input data distribution. -->
     </p>
     
     <!-- Discrete Diffusion -->
     <h4 class="subtitle">Discrete Diffusion</h3>
     <p>[TODO]
-      Applications of diffusion modeling to discrete data can be categorized into two broad areas. The first involves embedding discrete structures in continuous space and then performing the Gaussian diffusion defined above on these continuous representations. More related to our method are works that define a diffusion process directly on discrete structures. <a href="https://arxiv.org/abs/2107.03006">D3PM </a> introduces a framework with a Markov forward process \( q(z_t|z_{t−1}) = \text{Cat}(z_t; Q_t z_{t−1}) \), defined by the multiplication of matrices \( Q_t \in \mathbb{R}^{n \times n} \) over \( T \) discrete time steps. The matrix \( Q_t \) is designed such that \( Q_T \cdot Q_{T-1} \cdots Q_1 \mathbf{x} \) converges to a stationary distribution.
+      <!-- Applications of diffusion modeling to discrete data can be categorized into two broad areas. The first involves embedding discrete structures in continuous space and then performing the Gaussian diffusion defined above on these continuous representations. More related to our method are works that define a diffusion process directly on discrete structures. <a href="https://arxiv.org/abs/2107.03006">D3PM </a> introduces a framework with a Markov forward process \( q(z_t|z_{t−1}) = \text{Cat}(z_t; Q_t z_{t−1}) \), defined by the multiplication of matrices \( Q_t \in \mathbb{R}^{n \times n} \) over \( T \) discrete time steps. The matrix \( Q_t \) is designed such that \( Q_T \cdot Q_{T-1} \cdots Q_1 \mathbf{x} \) converges to a stationary distribution. -->
     </p>
   </div>
   </div>
@@ -250,7 +256,7 @@
 <!-- End Diffusion Models -->
 
 <!-- Simple Masked Diffusion Models -->
-<section class="section" id="SimpleMaskedDiffusionModels">
+<section class="section" id="DiffusionDuality">
   <div class="container is-max-desktop">
   <div class="content is-medium">
     <h2 class="title">The Diffusion Duality</h2>
@@ -260,74 +266,25 @@
     
     <h4>ELBO</h4>
     <p> TODO </p>
-    <h4>Application (1 / 2): Curriculum Learning</h4>
-    <p>
-      <!-- Note that the Negative Evidence Lower Bound (NELBO) takes the following form for a diffusion model: \( \mathcal{L}_{\text{reconstruction}} + \mathcal{L}_{\text{diffusion}} + \mathcal{L}_{\text{prior}}\). As described in the paper, SUBS parameterization reduces the  \( \mathcal{L}_{\text{reconstruction}} \) to \(0\) and \(\alpha_{t = 1} = 0\) ensures that  \( \mathcal{L}_{\text{prior}} = 0 \). -->
-      For a sequence \(\mathbf{x}^{1: L}\) of length \(L\), SUBS parameterization simplifies the Negative Evidence Lower Bound (NELBO) to the following:
-      \begin{align}
-          \mathcal{L}_{\text{NELBO}}^\infty = \mathbb{E}_{q}\int_{t=0}^{t=1} \frac{\alpha_{t}'}{1 - \alpha_t} \sum_{\ell = 1}^{L} \log \langle \mathbf {x}_\theta^\ell(\mathbf{z}_t), \mathbf{x}^\ell \rangle \text{d} t
-      \end{align}
-      where \(\alpha_{t}'\) denotes the time derivative of \(\alpha_{t}\). As shown in the table below, MDLM outperforms the previous diffusion models and nearly matches the performance of AR models in text generation on the LM1B dataset.
 
-      <br>
-      <br>
-      We also explore models' ability to generalize by taking models trained on OWT and evaluating how well they model unseen datasets.
-      We compare the zero-shot perplexities of MDLM with SEDD and an AR Transformer language model on the validation splits of Penn Tree Bank (PTB), Wikitext, LM1B, Lambada, AG News, and Scientific Papers (Pubmed and Arxiv subsets).
-      MDLM consistently outperforms SEDD.
-      In some cases, e.g., for Lambada and Scientific Papers, MDLM attains better perplexity than AR.
-      We hypothesize that these datasets are farther from OWT, and that diffusion models may be more robust to out-of-domain evaluation due to the unmasking-based objective.
-      <br>
-      <!-- <table>
-        <caption><em>Zero-shot validation perplexities ( &darr;) of models trained for 524B tokens on OpenWebText.
-          All perplexities for diffusion models are upper bounds.</em></caption>
-        <tr>
-          <th></th>
-          <th>PTB</th>
-          <th>Wikitext</th>
-          <th>LM1B</th>
-          <th>Lambada</th>
-          <th>AG News</th>
-          <th>Pubmed</th>
-          <th>Arxiv</th>
-        </tr>
-        <tr>
-          <td>AR (Retrained)</td>
-          <td><strong>82.05</strong></td>
-          <td><strong>25.75</strong></td>
-          <td><strong>51.25</strong></td>
-          <td>51.28</td>
-          <td><strong>52.09</strong></td>
-          <td>49.01</td>
-          <td>41.73</td>
-        </tr>
-        <tr>
-          <td>SEDD (Retrained)</td>
-          <td>100.09</td>
-          <td>34.28</td>
-          <td>68.20</td>
-          <td>49.86</td>
-          <td>62.09</td>
-          <td>44.53</td>
-          <td>38.48</td>
-        </tr>
-        <tr>
-          <td><strong>MDLM (Ours)</strong></td>
-          <td>95.26</td>
-          <td>32.83</td>
-          <td>67.01</td>
-          <td><strong>47.52</strong></td>
-          <td>61.15</td>
-          <td><strong>41.89</strong></td>
-          <td><strong>37.37</strong></td>
-        </tr>
-      </table> -->
+    </div>
+  </div>
+</section>
+
+<section class="section" id="Experiments">
+  <div class="container is-max-desktop">
+  <div class="content is-medium">
+    <h2 class="title">Experiments</h2>
+    <h4> Curriculum Learning</h4>
+    <p> TODO
     </p>
-    <h4>Application (2 / 2): Distillation</h4>
+    <h4>Distillation</h4>
     <p> TODO</p>
 
     </div>
   </div>
 </section>
+
 <!-- End Diffusion Models -->
 
 
