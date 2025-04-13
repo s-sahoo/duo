@@ -1,6 +1,0 @@
-type: gaussian
-warmup_start: 0.5
-warmup_end: 0.75
-latent_height: 1
-latent_width: ${model.hidden_size}
-constrain_encoder_logits: False
