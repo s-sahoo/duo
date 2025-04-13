@@ -19,11 +19,11 @@
 srun python -u -m main \
   loader.batch_size=32 \
   loader.eval_batch_size=32 \
-  data=lm1b-wrap \
-  wandb.name=duo-lm1b \
+  data=openwebtext-split \
+  wandb.name=duo-owt \
   model=small \
   algo=duo \
-  model.length=128 \
+  model.length=1024 \
   algo.gumbel_tau_log10_start=-3.0 \
   algo.gumbel_tau_log10_end=-3.0 \
   algo.gamma_min=-3.55 \

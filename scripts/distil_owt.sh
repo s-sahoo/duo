@@ -13,7 +13,7 @@
 #SBATCH --requeue                     # Requeue upon preemption
 
 export HYDRA_FULL_ERROR=1
-finetune_path=/share/kuleshov/ssahoo/flow-ode/flow-ode-ntgT22-small-udlm-OWT/checkpoints/29-500000.ckpt
+finetune_path=/path/to/duo.ckpt
 
 srun python -u -m main \
   mode=train \
@@ -24,18 +24,16 @@ srun python -u -m main \
   algo=distillation \
   training.finetune_path=$finetune_path \
   sampling.num_sample_batches=10 \
-  algo.posterior_loss_weight=0.5 \
   sampling.steps=32 \
   eval.compute_generative_perplexity=True \
   algo.T=512 \
   lr_scheduler.num_warmup_steps=500 \
   trainer.val_check_interval=1000 \
-  trainer.max_steps=80000 \
+  trainer.max_steps=50000 \
   loader.global_batch_size=128 \
   training.ema=0.999 \
-  algo.grow_dt_every=10000 \
+  algo.update_teacher_every=10000 \
   optim.lr=6e-5 \
-  training.loss_precision='bf16' \
   trainer.limit_val_batches=8 \
   algo.teacher_ema=False \
   algo.linear_growth_dt=false \
