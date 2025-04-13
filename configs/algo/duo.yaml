@@ -9,7 +9,7 @@ gumbel_tau_log10_start: -1.0
 gumbel_tau_log10_end: -2.0
 curriculum_start: 100_000
 curriculum_end: 200_000
-integral_cache_path: integral/${data.tokenizer_name_or_path}.pkl
+integral_cache_path: ${hydra:runtime.cwd}/integral/${data.tokenizer_name_or_path}.pkl
 loss_type: elbo
 ignore_bos: False
 gamma_min: -3.5

@@ -9,7 +9,7 @@ gumbel_tau_log10_end: -1
 curriculum_start: -1
 curriculum_end: -1
 
-integral_cache_path: integral/${data.tokenizer_name_or_path}.pkl
+integral_cache_path: ${hydra:runtime.cwd}/integral/${data.tokenizer_name_or_path}.pkl
 loss_type: kl-bwd  # kl-fwd, kl-bwd, posterior
 update_teacher_every: 10_000
 ignore_bos: False
