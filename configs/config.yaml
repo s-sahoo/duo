@@ -23,7 +23,7 @@ loader:
   pin_memory: True
 
 sampling:
-  predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
+  predictor: ddpm  # analytic, ddpm, ddpm_cache
   steps: 1000
   noise_removal: 'ancestral'  # 'ancestral', 'greedy', 'none'
   use_float64: True
