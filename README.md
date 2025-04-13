@@ -5,7 +5,7 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Sf7R-dqdR6gq-H8nyZ9E3ZkyvqMTqcwq?usp=sharing)
 [![deploy](https://img.shields.io/badge/Blog%20%20-8A2BE2)](http://s-sahoo.github.io/duo)
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=CB0Ub2yXjC)
-[![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/subbham/duo)
+[![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
 ![graphical_abstract_updated_2](https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png)
 
