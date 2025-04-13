@@ -6,6 +6,7 @@ Copied from https://docs.python.org/3/howto/logging-cookbook.html#using-a-contex
 
 import logging
 import os
+import sys
 import pickle
 import time
 
@@ -250,10 +251,10 @@ def _discrete_prob_grad(gamma_t, N=10):
   return value
 
 
-def _cache_prob_usdm(partition_index, num_partitions,
-                     vocab_size=30522):
+def _cache_prob_usdm_in_partition(
+  vocab_size=30522, partition_index=0, num_partitions=1):
   print(f'Caching partition:{partition_index} / {num_partitions}')
-  path = '/share/kuleshov/ssahoo/gaussian_text/integral_cache'
+  path = 'integral'
   gamma_min = -5
   gamma_max = -1
   pow = 5
@@ -263,7 +264,8 @@ def _cache_prob_usdm(partition_index, num_partitions,
   start_time = time.time()
   gammas = np.linspace(gamma_min, gamma_max, num_points)
   n = num_points // num_partitions
-  for gamma in gammas[partition_index * n: (partition_index + 1) * n]:
+  for gamma in gammas[partition_index * n:
+                      (partition_index + 1) * n]:
     pt, _ = quad(_discrete_prob_map(gamma, vocab_size),
                  -np.inf, np.inf)
     p_cache.append(pt)
@@ -271,10 +273,14 @@ def _cache_prob_usdm(partition_index, num_partitions,
                       -np.inf, np.inf)
     grad_p_cache.append(grad_pt)
     if len(p_cache) % 100 == 0:
-      print(f'{int(100 * len(p_cache) / num_points)}% completed. Time elapsed:{(time.time() - start_time) / 60}mins')
+      print('{}% completed. Time elapsed:{:.2f} mins'.format(
+        int(100 * len(p_cache) / num_points),
+        (time.time() - start_time) / 60))
 
-  with open(os.path.join(path, f'{vocab_size}_{pow}_{partition_index}-{num_partitions}.pkl'),
-            'wb') as f:
+  filename = os.path.join(
+    path, '{}_{}_{}-{}.pkl'.format(
+      vocab_size, pow, partition_index, num_partitions))
+  with open(filename, 'wb') as f:
     pickle.dump({
       'vocab_size': vocab_size,
       'gamma_min': gamma_min,
@@ -284,11 +290,10 @@ def _cache_prob_usdm(partition_index, num_partitions,
       'grad_pt': np.asarray(grad_p_cache)}, f)
 
 
-def test_cache_prob_usdm(partition_index, num_partitions,
-                         vocab_size=30522):
+def test_cache_prob_usdm_in_partition(
+  partition_index=0, num_partitions=1, vocab_size=30522):
   pow = 5
-  path = ('/share/kuleshov/ssahoo/gaussian_text/integral_cache/'
-          f'{vocab_size}_{pow}_{partition_index}-{num_partitions}.pkl')
+  path = f'integral/{vocab_size}_{pow}_{partition_index}-{num_partitions}.pkl'
   with open(path, 'rb') as f:
     data = pickle.load(f)
   num_points = data['num_points']
@@ -302,26 +307,41 @@ def test_cache_prob_usdm(partition_index, num_partitions,
                        data['gamma_max'],
                        num_points)
   n = num_points // num_partitions
-  for i in gammas[partition_index * n: (partition_index + 1) * n]:
-    pt, _ = quad(_discrete_prob_map(np.exp(-i / 2),
-                                    data['vocab_size']),
-                 -np.inf, np.inf)
-    grad_pt, _ = quad(_discrete_prob_grad(np.exp(-i / 2),
-                                          data['vocab_size']),
-                      -np.inf, np.inf)
-    idx = _get_index(i)
+  for gamma in gammas[partition_index * n:
+                      (partition_index + 1) * n]:
+    pt, _ = quad(
+      _discrete_prob_map(gamma, data['vocab_size']),
+      -np.inf, np.inf)
+    grad_pt, _ = quad(
+      _discrete_prob_grad(gamma, data['vocab_size']),
+      -np.inf, np.inf)
+    idx = _get_index(gamma)
     print(idx)
     pt_errors.append((pt - data['pt'][idx]) ** 2)
     grad_pt_errors.append((grad_pt - data['grad_pt'][idx]) ** 2)
-  print(f"pt error:{np.mean(pt_errors)} pt sqr:{np.mean(data['pt'] ** 2)}")
-  print(f"grad_pt error:{np.mean(grad_pt_errors)} pt sqr:{np.mean(data['grad_pt'] ** 2)}")
+  print('Integral MSE:{} Integral Squared:{:.4f}'.format(
+    np.mean(pt_errors), np.mean(data['pt'] ** 2)))
+  print('Integral Grad MSE:{} Integral Grad Squared:{:.4f}'.format(
+    np.mean(grad_pt_errors), np.mean(data['grad_pt'] ** 2)))
 
 
 if __name__ == "__main__":
-  import sys
-  partition_index, num_partitions = sys.argv[1:]
-  vocab_size = 50257
-  _cache_prob_usdm(int(partition_index), int(num_partitions),
-                   vocab_size)
-  # test_cache_prob_usdm(int(partition_index), int(num_partitions))
-  # import ipdb; ipdb.set_trace()
+  vocab_size = 50257  # gpt2 tokenizer
+  _cache_prob_usdm_in_partition(vocab_size=int(vocab_size))
+  
+  # Computing the integral cache using the above command may be
+  # time consuming. Hence, the computation can be parallelized
+  # using the following command:
+  # vocab_size, partition_index, num_partitions = sys.argv[1:]
+  # _cache_prob_usdm_in_partition(
+  #   partition_index=int(partition_index),
+  #   num_partitions=int(num_partitions),
+  #   vocab_size=int(vocab_size))
+  
+  # Use the below command to ensure that the cached integral
+  # is computed correctly.
+  # vocab_size, partition_index, num_partitions = sys.argv[1:]
+  # test_cache_prob_usdm_in_partition(
+  #   partition_index=int(partition_index),
+  #   num_partitions=int(num_partitions),
+  #   vocab_size=int(vocab_size))
