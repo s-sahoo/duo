@@ -1,0 +1,9 @@
+name: sedd
+backbone: dit  # dit / dimamba
+parameterization: score 
+time_conditioning: True
+T: 0  # 0 (continuous time) / 1000 
+subs_masking: False
+causal_attention: False
+ignore_bos: False
+loss_type: elbo  # elbo, low_var

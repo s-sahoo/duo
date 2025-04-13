@@ -1,0 +1,9 @@
+name: d3pm
+backbone: dit  # dit / dimamba
+parameterization: mean
+time_conditioning: True
+T: 1000 
+subs_masking: False  # True / False
+causal_attention: False
+ignore_bos: False
+loss_type: elbo  # elbo, low_var

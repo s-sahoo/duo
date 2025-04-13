@@ -1,0 +1,5 @@
+_target_: torch.optim.lr_scheduler.LambdaLR
+lr_lambda:
+  _target_: utils.LRHalveScheduler
+  warmup_steps: 500
+  n_halve_steps: 10_000

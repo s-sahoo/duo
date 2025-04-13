@@ -1,0 +1,8 @@
+train: synthetic
+valid: synthetic
+tokenizer_name_or_path: synthetic
+cache_dir: /share/kuleshov/ssahoo/textdiffusion/data
+wrap: True
+streaming: True
+insert_train_eos: True
+insert_valid_eos: True

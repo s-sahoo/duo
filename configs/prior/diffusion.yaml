@@ -1,0 +1,11 @@
+type: diffusion
+hiddden_dim: 64
+n_blocks: 1
+n_heads: ${model.n_heads}
+gamma_type: fixed-linear
+gamma_min: -13.3
+parameterization: noise
+warmup_start: 0.1
+warmup_end: 0.2
+latent_height: ${model.length}
+latent_width: ${model.hidden_size}

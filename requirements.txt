@@ -1,0 +1,30 @@
+# conda install nvidia/label/cuda-12.4.0::cuda-toolkit
+datasets==2.18.0
+einops==0.7.0
+fsspec==2024.2.0
+git-lfs==1.6
+h5py==3.10.0
+hydra-core==1.3.2
+ipdb==0.13.13
+lightning==2.2.1
+notebook==7.1.1
+nvitop==1.3.2
+omegaconf==2.3.0
+packaging==23.2
+pandas==2.2.1
+rich==13.7.1
+seaborn==0.13.2
+scikit-learn==1.4.0
+transformers==4.38.2
+triton==2.2.0
+torch==2.3.1
+torchaudio==2.3.1
+torchmetrics==1.6.1
+torchvision==0.18.1
+wandb
+timm
+ocifs
+hf_transfer
+huggingface-hub
+# Install flash attention only after installing the above modules via pip install -r requirements.txt
+# flash_attn==2.7.4.post1

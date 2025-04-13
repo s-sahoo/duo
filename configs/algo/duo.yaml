@@ -1,0 +1,16 @@
+name: duo
+backbone: dit  # dit / dimamba / hf_dit
+parameterization: mean
+time_conditioning: True
+T: 0  # 0 (continuous time) / 1000 
+subs_masking: False
+causal_attention: False
+gumbel_tau_log10_start: -1.0
+gumbel_tau_log10_end: -2.0
+curriculum_start: 100_000
+curriculum_end: 200_000
+integral_cache_path: '/share/kuleshov/ssahoo/gaussian_text/integral_cache/30522_5.pkl'
+loss_type: elbo
+ignore_bos: False
+gamma_min: -3.5
+gamma_max: -1.75
