@@ -1,3 +1,4 @@
+import os
 import collections
 import copy
 import pickle
@@ -527,7 +528,6 @@ class Distillation(DUO):
   def __init__(self, config, tokenizer):
     super().__init__(config, tokenizer)
     self.update_teacher_every = config.algo.update_teacher_every
-    self.posterior_loss_weight = config.algo.posterior_loss_weight
     self.save_hyperparameters()
     self.teacher = None
     self.teacher_ema = config.algo.teacher_ema
@@ -536,6 +536,15 @@ class Distillation(DUO):
     self.linear_growth_max = config.algo.linear_growth_max
 
   def _validate_configuration(self):
+    assert os.path.exists(
+      self.config.algo.integral_cache_path), (
+        'The integral cache (Eq. 10 in the paper) for '
+        f'the {self.config.data.tokenizer_name_or_path} '
+        ' tokenizer doesnt exist at '
+        f'{self.config.algo.integral_cache_path}. '
+        'Please generate it by running the utils.py script, '
+        'and ensure the correct path is specified using the '
+        'algo.integral_cache_path flag.')
     assert self.loss_type in {
       'kl-fwd', 'kl-bwd', 'posterior', 'kl-posterior'}
 
@@ -635,43 +644,3 @@ class Distillation(DUO):
              on_epoch=False,
              sync_dist=True)
     return super().training_step(batch, batch_idx)
-
-
-class OptimalTransportFinetune(DUO_BASE):
-  def __init__(self, config, tokenizer):
-    super().__init__(config, tokenizer)
-    self.delta_ts = config.algo.delta_ts
-    self.save_hyperparameters()
-
-  def nll(self, x0, output_tokens,
-          current_accumulation_step=None, train_mode=None):
-    del output_tokens, train_mode
-    _t = self._sample_t(x0.shape[0],
-                        current_accumulation_step)[:, None]
-    if self.delta_ts > 0:
-      _s = (_t - self.delta_ts) % 1
-      s = torch.minimum(_s, _t)
-      t = torch.maximum(_s, _t)
-    else:
-      t = _t
-      s = t * torch.rand_like(t)
-    alpha_t = 1 - t
-    x0_one_hot = F.one_hot(x0, self.vocab_size)
-    epsilon = torch.randn_like(x0_one_hot, dtype=self.dtype)
-    xt = ((1 - t[:, None]) * x0_one_hot
-          + t[:, None] * epsilon).argmax(-1)
-    xs = ((1 - s[:, None]) * x0_one_hot
-          + s[:, None] * epsilon).argmax(-1)
-    
-    log_x_theta = self.forward(
-      xt, sigma=self._sigma_from_alphat(alpha_t))
-    
-    q_xs = self._compute_posterior(
-      x=log_x_theta.exp(),
-      xt=xt,
-      alpha_s=1 - s,
-      alpha_t=alpha_t)
-    return - torch.gather(
-      input=q_xs.log(),
-      dim=-1,
-      index=xs[:, :, None]).squeeze(-1)
