@@ -25,10 +25,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 checkpoint_path=/share/kuleshov/ssahoo/flow-ode/distil-distil-vjrpZb-distillation-OWT/checkpoints
-# ckpt=0-50000
-# checkpoint_path=/share/kuleshov/ssahoo/flow-ode/flow-ode-ntgT22-small-udlm-OWT/checkpoints
-# ckpt=29-500000
-# checkpoint_path=/share/kuleshov/ssahoo/flow-ode/distil-distil-bbone-Ud0516-distillation-OWT/checkpoints
+ckpt=0-50000
 
 steps=${steps:-32}
 seed=${seed:-1}
