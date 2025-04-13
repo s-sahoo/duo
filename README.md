@@ -10,17 +10,17 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 ![graphical_abstract_updated_2](https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png)
 
 In this repo, we release:
-* **The DUO framework.**
-  1. Curriculum learning strategy to speed up training.
-  2. Discrete Consistency Distillation pipeline.
-  3. Greedy-tail sampler.
+* **The DUO framework**
+  1. Curriculum learning strategy to speed up training. [[Example]](#training)
+  2. Discrete Consistency Distillation pipeline. [[Example]](#distillation)
+  3. Greedy-tail sampler. [[Example]](#sampling)
 * **Baseline implementations** [[Examples]](#baselines):
   1. Autoregressive Model.
   2. [MDLM](https://arxiv.org/abs/2406.07524): Sahoo et al., "Simple and Effective Masked Diffusion Language Model", NeurIPS 2025.
   3. [SEDD (absorb)](https://arxiv.org/abs/2310.16834): Lou et al., "Score Entropy Based Discrete Diffusion", ICML 2025.
   4. [D3PM (absorb)](https://arxiv.org/abs/2107.03006) Austin et al., "Structured Denoising Diffusion Models in Discrete State-Spaces", NeurIPS 2021.
 
-<a name="code-organization"></a>
+<!-- <a name="code-organization"></a>
 ## Code Organization
 1. ```main.py```: The main entry point for training / eval.
 2. ```trainer_base.py```: Boiler plate trainer using pytorch lightning.
@@ -29,12 +29,12 @@ In this repo, we release:
 5. ```utils.py```: LR scheduler, logging, `fsspec` handling.
 6. ```models/```: Denoising network architectures. Supports [DiT](https://arxiv.org/abs/2212.09748) and AR transformer.
 7. ```configs/```: Config files for datasets/denoising networks/noise schedules/LR schedules.
-8. ```scripts/```: Shell scripts for training/evaluation.
+8. ```scripts/```: Shell scripts for training/evaluation. -->
 
 
 <a name="getting_started"></a>
 
-## Getting started in this repository
+# Getting Started
 
 To get started, create a conda environment containing the required dependencies.
 
@@ -46,22 +46,20 @@ pip install -r requirements.txt
 pip install flash_attn==2.7.4.post1
 ```
 
-Create the following directory to store saved models and slurm logs:
+Run `mkdir watch_folder` to create a directory to store saved models and slurm logs
+and then run any script in [`scripts/`](scripts) as a slurm job:
 ```bash
-mkdir watch_folder
-```
-and run the training as a batch job:
-```bash
-sbatch scripts/train_owt_duo.sh
+sbatch scripts/ABC_XYZ.sh
 ```
 
 ### Checkpoints
 
 We have uploaded the DUO models (distilled/undistilled) trained on OpenWebText for 1M training steps to the Huggingface hub 🤗:
 [kuleshov-group/mdlm-owt](https://huggingface.co/subbham/duo)
-Finetuning from these checkpoints, from the HF checkpoints might not be possible; hence, the same checkpoints have been released on [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link).
+Finetuning from these checkpoints, from the HF checkpoints isn't possible; hence, the same checkpoints have been released on [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link).
 
-## Training
+# Training
+<a name="training"></a>
 ```
 TODO: how to create the integral cache
 ```
@@ -80,29 +78,22 @@ python main.py \
   model.length=1024 \
   sampling.steps=1000
 ```
-The arguments `loader.batch_size` and `loader.eval_batch_size` allow you to control the batch size per GPU. If `loader.batch_size * num_gpus` is less than the global_batch_size, PyTorch Lightning will resort to gradient accumulation. You can also launch a training job on Slurm using the command: `sbatch scripts/train_owt_mdlm.sh`. The slurm scripts to train the AR, MDLM, SEDD-absorb baselines can be found in the [`scripts`](scripts/) directory.
-
+The arguments `loader.batch_size` and `loader.eval_batch_size` allow you to control the batch size per GPU. If `loader.batch_size * num_gpus` is less than the global_batch_size, PyTorch Lightning will resort to gradient accumulation. You can also launch a training job on Slurm using the command: `sbatch scripts/train_owt_duo.sh`. The slurm scripts to train the AR, MDLM, SEDD-absorb baselines can be found in the [`scripts`](scripts/) directory.
+ Example scripts provided in `scripts/eval_owt_*.sh`
 TODO: NB Curriculum Learning often increases the memory consumption
 
-## Eval 
-To compute test perplexity, use `mode=ppl_eval`. Example scripts provided in `scripts/eval_owt_*.sh`. An example command for perplexity evaluation on OpenWebText is:
-```
-python main.py \
-  mode=ppl_eval \
-  loader.batch_size=16 \
-  loader.eval_batch_size=16 \
-  data=openwebtext-split \
-  model=small \
-  parameterization=subs \
-  backbone=dit \
-  model.length=1024 \
-  eval.checkpoint_path=/path/to/checkpoint/mdlm.ckpt \
-  +wandb.offline=true
-```
+# Distillation
+<a name="distillation"></a>
+
+To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh)
 
 
-## Generate Samples
-<a name="sample-gen"></a>
+# Eval 
+<a name="eval"></a>
+To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_duo.sh`](scripts/eval_owt_duo.sh). To compute the zero shot perplexities use [`scripts/zero_shot_duo.sh`](scripts/zero_shot_duo.sh).
+
+# Sampling
+<a name="sampling"></a>
 
 To generate samples from a pre-trained model use one of the following command.
 Set 
@@ -110,7 +101,7 @@ Set
 * `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces samples with worse generative perplexity but higher entropy.
 
 #### Huggingface model
-We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface🤗](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875).
+We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
 ```bash
 python main.py \
   mode=sample_eval \
@@ -126,33 +117,21 @@ python main.py \
   +wandb.offline=true 
 ```
 #### Local checkpoint
-We’ve released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command below to generate samples.
-```bash
-python -u -m main \
-  mode=sample_eval \
-  loader.batch_size=2 \
-  loader.eval_batch_size=8 \
-  data=openwebtext-split \
-  model.length=1024  \
-  algo=duo_base \
-  model=small \
-  eval.checkpoint_path=/path/to/duo-distilled.ckpt \
-  sampling.num_sample_batches=1 \
-  sampling.steps=8 \
-  sampling.noise_removal=greedy \
-  +wandb.offline=true 
-```
+We’ve released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh), making sure to specify the paths correctly.
 
 
-## Baselines
+# Baselines
 <a name="baselines"></a>
-We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenWebText in this [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing). Download the checkpoints: `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt` and specify the paths appropriately in [scripts/](scripts/) for computing eval ppl (`scripts/eval_owt_*.sh`), text samples (`scripts/gen_ppl_*.sh`), zero shot ppl (`scripts/zero_shot_*.sh`).
+We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenWebText in this [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing). Download the checkpoints: `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt` and specify the paths appropriately in the respective shell scripts:
+* [`scripts/eval_owt_*.sh`](scripts/) for computing validation perplexity on OWT.
+* [`scripts/gen_ppl_*.sh`](scripts/) for generating text samples and evaluating them.
+* [`scripts/zero_shot_*.sh`](scripts/) for computing zero shot perplexities.
 
-### Acknowledgements
-This repository was built off of [MDLM](https://github.com/kuleshov-group/mdlm).
+# Acknowledgements
+This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm).
 
 
-## Citation
+# Citation
 ```
 @inproceedings{
 sahoo2025the,
