@@ -9,15 +9,14 @@ gumbel_tau_log10_end: -1
 curriculum_start: -1
 curriculum_end: -1
 
-teacher_path: '/share/kuleshov/ssahoo/flow-ode/conjugate-finetune-ce/checkpoints/79-2100000.ckpt'
-integral_cache_path: '/share/kuleshov/ssahoo/gaussian_text/integral_cache/30522_5.pkl'
+integral_cache_path: integral/${data.tokenizer_name_or_path}.pkl
 loss_type: kl-bwd  # kl-fwd, kl-bwd, posterior
 update_teacher_every: 10_000
 ignore_bos: False
 T: 64
 gamma_min: -4
 gamma_max: -1
-teacher_ema: True
+teacher_ema: False
 posterior_loss_weight: 0.0
 linear_growth_dt: False
 linear_growth_min: 0.001
