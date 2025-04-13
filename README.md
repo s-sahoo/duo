@@ -12,7 +12,8 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 In this repo, we release:
 * **The DUO framework.**
   1. Curriculum learning strategy to speed up training.
-  2. Distillation scheme
+  2. Discrete Consistency Distillation pipeline.
+  3. Greedy-tail sampler.
 * **Baseline implementations** [[Examples]](#baselines):
   1. Autoregressive Model.
   2. [MDLM](https://arxiv.org/abs/2406.07524): Sahoo et al., "Simple and Effective Masked Diffusion Language Model", NeurIPS 2025.
@@ -103,36 +104,41 @@ python main.py \
 ## Generate Samples
 <a name="sample-gen"></a>
 
-To generate samples from a pre-trained model use one of the following commands:
-TODO: Use the flags `sampling.noise_removal` to `greedy` (has an effect akin to nucleus sampling in AR models, FIG XYZ) or the standard `ancestral` (FIG ABC) 
+To generate samples from a pre-trained model use one of the following command.
+Set 
+* `sampling.noise_removal=greedy` to use the Greedy-tail sampler (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
+* `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces samples with worse generative perplexity but higher entropy.
+
 #### Huggingface model
-TODO
+We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface🤗](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875).
 ```bash
 python main.py \
   mode=sample_eval \
+  loader.batch_size=2 \
+  loader.eval_batch_size=8 \
+  data=openwebtext-split \
   algo=duo_base \
   algo.backbone=hf_dit \
-  eval.checkpoint_path=subbham/duo \
-  data=openwebtext-split  \
-  model.length=1024  \
-  sampling.predictor=ddpm  \
-  sampling.steps=1000 \
-  loader.eval_batch_size=1 \
-  sampling.num_sample_batches=10
+  eval.checkpoint_path=s-sahoo/duo-distilled \
+  sampling.steps=8 \
+  sampling.num_sample_batches=1 \
+  sampling.noise_removal=greedy \
+  +wandb.offline=true 
 ```
 #### Local checkpoint
+We’ve released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command below to generate samples.
 ```bash
 python -u -m main \
   mode=sample_eval \
   loader.batch_size=2 \
   loader.eval_batch_size=8 \
   data=openwebtext-split \
+  model.length=1024  \
   algo=duo_base \
   model=small \
-  eval.checkpoint_path=/share/kuleshov/ssahoo/flow-ode/flow-ode-ntgT22-small-udlm-OWT/checkpoints \
-  sampling.predictor=ddpm  \
+  eval.checkpoint_path=/path/to/duo-distilled.ckpt \
   sampling.num_sample_batches=1 \
-  sampling.steps=1000 \
+  sampling.steps=8 \
   sampling.noise_removal=greedy \
   +wandb.offline=true 
 ```
