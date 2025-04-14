@@ -18,9 +18,8 @@
 srun python -u -m main \
   loader.batch_size=256 \
   loader.eval_batch_size=256 \
-  data=lm1b-wrap \
+  data=lm1b \
   wandb.name=mdlm-lm1b \
   model=tiny \
   algo=mdlm \
-  model.length=128 \
-  hydra.run.dir=/share/kuleshov/ssahoo/mulan/mdlm-lm1b-tiny-mulan
+  model.length=128 

@@ -19,7 +19,7 @@
 srun python -u -m main \
   loader.batch_size=32 \
   loader.eval_batch_size=32 \
-  data=lm1b \
+  data=lm1b-wrap \
   wandb.name=duo-lm1b \
   model=small \
   algo=duo \
