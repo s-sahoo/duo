@@ -4,6 +4,7 @@ Copied from https://github.com/HazyResearch/transformers/blob/master/src/utils/u
 Copied from https://docs.python.org/3/howto/logging-cookbook.html#using-a-context-manager-for-selective-logging
 """
 
+import argparse
 import logging
 import os
 import sys
@@ -252,13 +253,13 @@ def _discrete_prob_grad(gamma_t, N=10):
 
 
 def _cache_prob_usdm_in_partition(
-  vocab_size=30522, partition_index=0, num_partitions=1):
+  vocab_size=30522, partition_index=0, num_partitions=1,
+  log10_num_points=5):
   print(f'Caching partition:{partition_index} / {num_partitions}')
   path = 'integral'
   gamma_min = -5
   gamma_max = -1
-  pow = 5
-  num_points = 10 ** pow
+  num_points = 10 ** log10_num_points
   p_cache = []
   grad_p_cache = []
   start_time = time.time()
@@ -279,7 +280,8 @@ def _cache_prob_usdm_in_partition(
 
   filename = os.path.join(
     path, '{}_{}_{}-{}.pkl'.format(
-      vocab_size, pow, partition_index, num_partitions))
+      vocab_size, log10_num_points, partition_index,
+      num_partitions))
   with open(filename, 'wb') as f:
     pickle.dump({
       'vocab_size': vocab_size,
@@ -291,9 +293,11 @@ def _cache_prob_usdm_in_partition(
 
 
 def test_cache_prob_usdm_in_partition(
-  partition_index=0, num_partitions=1, vocab_size=30522):
-  pow = 5
-  path = f'integral/{vocab_size}_{pow}_{partition_index}-{num_partitions}.pkl'
+  partition_index=0, num_partitions=1, vocab_size=30522,
+  log10_num_points=5):
+  path = 'integral/{}_{}_{}-{}.pkl'.format(
+    vocab_size, log10_num_points, partition_index,
+    num_partitions)
   with open(path, 'rb') as f:
     data = pickle.load(f)
   num_points = data['num_points']
@@ -326,22 +330,46 @@ def test_cache_prob_usdm_in_partition(
 
 
 if __name__ == "__main__":
-  vocab_size = 50257  # gpt2 tokenizer
-  _cache_prob_usdm_in_partition(vocab_size=int(vocab_size))
+  # Usage: python utils.py --vocab_size=N
+  parser = argparse.ArgumentParser(
+    description='Caches the integral appearing in the '
+                'Diffusion Transformation operator.')
+  parser.add_argument(
+    '--vocab_size',
+    type=int,
+    default=50257,  # For the gpt2 tokenizer
+    help='Vocabulary size (default: 50257)')
+  parser.add_argument(
+    '--partition_index',
+    type=int,
+    default=0,
+    help='Helps parallelize caching')
+  parser.add_argument(
+    '--num_partitions',
+    type=int,
+    default=1,
+    help='Helps parallelize caching')
+  parser.add_argument(
+    '--log10_num_points',
+    type=int,
+    default=5,
+    help=('The integral is function that needs to be '
+          'evaluated for inputs with a range [-5, 1]. '
+          'This argument represents the logarithm base 10 '
+          'of number of bins of discretization.'))
+  args = parser.parse_args()
+
+  # Computing the integral over [-5, 1] can be slow,
+  # so one might prefer splitting it into `num_partitions`
+  # bins and compute each separately and merge them later.
+  _cache_prob_usdm_in_partition(
+    partition_index=args.partition_index,
+    num_partitions=args.num_partitions,
+    vocab_size=args.vocab_size,
+    log10_num_points=args.log10_num_points)
   
-  # Computing the integral cache using the above command may be
-  # time consuming. Hence, the computation can be parallelized
-  # using the following command:
-  # vocab_size, partition_index, num_partitions = sys.argv[1:]
-  # _cache_prob_usdm_in_partition(
-  #   partition_index=int(partition_index),
-  #   num_partitions=int(num_partitions),
-  #   vocab_size=int(vocab_size))
-  
-  # Use the below command to ensure that the cached integral
-  # is computed correctly.
-  # vocab_size, partition_index, num_partitions = sys.argv[1:]
-  # test_cache_prob_usdm_in_partition(
-  #   partition_index=int(partition_index),
-  #   num_partitions=int(num_partitions),
-  #   vocab_size=int(vocab_size))
+  test_cache_prob_usdm_in_partition(
+    partition_index=args.partition_index,
+    num_partitions=args.num_partitions,
+    vocab_size=args.vocab_size,
+    log10_num_points=args.log10_num_points)
