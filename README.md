@@ -46,41 +46,37 @@ pip install -r requirements.txt
 pip install flash_attn==2.7.4.post1
 ```
 
+### Integral Cache [Important]
+Curriculum Learning (`Sec. 4.1`) and Discrete Consistency Distillation (`Sec. 4.2`) require mapping Gaussian to discrete diffusion parameters via the Diffusion Transformation operator (`Sec. 3`), which involves computing an integral (dependent only on the tokenizer’s vocabulary size). To avoid slowing down training, we pre-compute and cache this integral. Cached operators for `bert-base-uncased` (LM1B) and `gpt2` (OWT) are in [`integral/`](integral). For other tokenizers, run: 
+```
+python utils.py --vocab_size=N
+```
+where `N` is the vocabulary size of the tokenizer.
+
+### Checkpoints
+
+The checkpoints for the DUO models (distilled/undistilled) trained on OpenWebText for 1M training steps are available on:
+* [Huggingface](https://huggingface.co/subbham/duo)🤗.
+* [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
+
+### Slurm scripts
 Run `mkdir watch_folder` to create a directory to store saved models and slurm logs
 and then run any script in [`scripts/`](scripts) as a slurm job:
 ```bash
 sbatch scripts/ABC_XYZ.sh
 ```
 
-### Checkpoints
-
-We have uploaded the DUO models (distilled/undistilled) trained on OpenWebText for 1M training steps to the Huggingface hub 🤗:
-[kuleshov-group/mdlm-owt](https://huggingface.co/subbham/duo)
-Finetuning from these checkpoints, from the HF checkpoints isn't possible; hence, the same checkpoints have been released on [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link).
-
 # Training
 <a name="training"></a>
-```
-TODO: how to create the integral cache
-```
 
-Use the below command to train the DUO model from scratch on OpenWebText.
-We also provide sample `slurm` scripts for DUO with curriculum learning on LM1B [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh) and OWT [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
+To train DUO on LM1B use [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh) and [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh) for OWT.
 
 
-```
-python main.py \
-  trainer.max_steps=1000000 \
-  model=small \
-  data=openwebtext-split \
-  wandb.name=mdlm-owt \
-  parameterization=subs \
-  model.length=1024 \
-  sampling.steps=1000
-```
-The arguments `loader.batch_size` and `loader.eval_batch_size` allow you to control the batch size per GPU. If `loader.batch_size * num_gpus` is less than the global_batch_size, PyTorch Lightning will resort to gradient accumulation. You can also launch a training job on Slurm using the command: `sbatch scripts/train_owt_duo.sh`. The slurm scripts to train the AR, MDLM, SEDD-absorb baselines can be found in the [`scripts`](scripts/) directory.
- Example scripts provided in `scripts/eval_owt_*.sh`
-TODO: NB Curriculum Learning often increases the memory consumption
+**Curriculum Learning increases memory consumption** To manage this during OWT training, one may consider a two-stage approach:
+* Stage 1: Curriculum Learning for `500K` steps with a reduced batch size (`loader.batch_size=32` on 8 GPU A100 node) by specifying `trainer.max_steps=500000` in [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
+* Stage 2: Finetuning it for 500K more steps with a larger batch size (`loader.batch_size=64` on 8 GPU A100 node) using [`scripts/train_owt_duo_finetune.sh`](./scripts/train_owt_duo_finetune.sh).
+
+> Control the batch size / GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus` is less than the global batch size (`loader.global_batch_size`), PyTorch Lightning will resort to gradient accumulation. 
 
 # Distillation
 <a name="distillation"></a>
@@ -97,10 +93,10 @@ To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_du
 
 To generate samples from a pre-trained model use one of the following command.
 Set 
-* `sampling.noise_removal=greedy` to use the Greedy-tail sampler (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
+* `sampling.noise_removal=greedy` to use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
 * `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces samples with worse generative perplexity but higher entropy.
 
-#### Huggingface model
+### Huggingface model
 We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
 ```bash
 python main.py \
@@ -116,7 +112,7 @@ python main.py \
   sampling.noise_removal=greedy \
   +wandb.offline=true 
 ```
-#### Local checkpoint
+### Local checkpoint
 We’ve released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh), making sure to specify the paths correctly.
 
 
@@ -127,11 +123,8 @@ We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenW
 * [`scripts/gen_ppl_*.sh`](scripts/) for generating text samples and evaluating them.
 * [`scripts/zero_shot_*.sh`](scripts/) for computing zero shot perplexities.
 
-# Acknowledgements
-This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm).
-
-
-# Citation
+# Acknowledgements & Citation
+This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our paper using:
 ```
 @inproceedings{
 sahoo2025the,
