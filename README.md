@@ -7,6 +7,8 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=CB0Ub2yXjC)
 [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
+<img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
+
 ![graphical_abstract_updated_2](https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png)
 
 In this repo, we release:
