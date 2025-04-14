@@ -128,6 +128,7 @@ We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenW
 * [`scripts/eval_owt_*.sh`](scripts/) for computing validation perplexity on OWT.
 * [`scripts/gen_ppl_*.sh`](scripts/) for generating text samples and evaluating them.
 * [`scripts/zero_shot_*.sh`](scripts/) for computing zero shot perplexities.
+* [`scripts/train_*.sh`](scripts/) for training the models.
 
 # Acknowledgements & Citation
 This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our paper using:
