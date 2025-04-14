@@ -17,8 +17,8 @@
 # `checkpointing.save_dir` explicitly.
 
 srun python -u -m main \
-  loader.batch_size=32 \
-  loader.eval_batch_size=32 \
+  loader.batch_size=64 \
+  loader.eval_batch_size=64 \
   data=lm1b \
   wandb.name=duo-lm1b \
   model=small \

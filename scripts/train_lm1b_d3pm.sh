@@ -8,16 +8,16 @@
 #SBATCH --partition=kuleshov          # Request partition
 #SBATCH --constraint="[a5000|a6000|a100|3090]"
 #SBATCH --constraint="gpu-mid|gpu-high"
-#SBATCH --ntasks-per-node=4
-#SBATCH --gres=gpu:4                  # Type/number of GPUs needed
+#SBATCH --ntasks-per-node=8
+#SBATCH --gres=gpu:8                  # Type/number of GPUs needed
 #SBATCH --open-mode=append            # Do not overwrite logs
 #SBATCH --requeue                     # Requeue upon pre-emption
 
 # To enable preemption re-loading, set `hydra.run.dir` or 
 # `checkpointing.save_dir` explicitly.
 srun python -u -m main \
-  loader.batch_size=16 \
-  loader.eval_batch_size=16 \
+  loader.batch_size=64 \
+  loader.eval_batch_size=64 \
   model=small \
   data=lm1b \
   wandb.name=d3pm-lm1b \

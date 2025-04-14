@@ -16,8 +16,8 @@
 # To enable preemption re-loading, set `hydra.run.dir` or 
 # `checkpointing.save_dir` explicitly.
 srun python -u -m main \
-  loader.batch_size=256 \
-  loader.eval_batch_size=256 \
+  loader.batch_size=64 \
+  loader.eval_batch_size=64 \
   data=lm1b \
   wandb.name=mdlm-lm1b \
   model=small \
