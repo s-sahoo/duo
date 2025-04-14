@@ -20,6 +20,6 @@ srun python -u -m main \
   loader.eval_batch_size=256 \
   data=lm1b \
   wandb.name=mdlm-lm1b \
-  model=tiny \
+  model=small \
   algo=mdlm \
   model.length=128 
