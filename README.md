@@ -7,6 +7,8 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=CB0Ub2yXjC)
 [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
+**TL;DR:** We show that Uniform state diffusion emerges from Gaussian diffusion, enabling the design of **few-step diffusion language models**.
+
 <div align="center">
   <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
 </div>
@@ -74,7 +76,7 @@ sbatch scripts/ABC_XYZ.sh
 To train DUO on LM1B use [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh) and [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh) for OWT.
 
 
-**Curriculum Learning increases memory consumption** To manage this during OWT training, one may consider a two-stage approach:
+**Curriculum Learning increases memory consumption.** To manage this during OWT training, one may consider a two-stage approach:
 * Stage 1: Curriculum Learning for `500K` steps with a reduced batch size (`loader.batch_size=32` on 8 GPU A100 node) by specifying `trainer.max_steps=500000` in [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
 * Stage 2: Finetuning it for 500K more steps with a larger batch size (`loader.batch_size=64` on 8 GPU A100 node) using [`scripts/train_owt_duo_finetune.sh`](./scripts/train_owt_duo_finetune.sh).
 
@@ -98,8 +100,7 @@ Set
 * `sampling.noise_removal=greedy` to use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
 * `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces samples with worse generative perplexity but higher entropy.
 
-### Huggingface model
-We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
+We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗. To sample from a HF model, run the following command:
 ```bash
 python main.py \
   mode=sample_eval \
@@ -114,8 +115,8 @@ python main.py \
   sampling.noise_removal=greedy \
   +wandb.offline=true 
 ```
-### Local checkpoint
-We’ve released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh), making sure to specify the paths correctly.
+
+We’ve also released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh), making sure to specify the paths correctly.
 
 
 # Baselines
