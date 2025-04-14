@@ -15,14 +15,20 @@
 
 # To enable preemption re-loading, set `hydra.run.dir` or 
 # `checkpointing.save_dir` explicitly.
+finetune_path=/path/to/intermediate_duo_500k.ckpt
 
+# Assuming the finetune_path corresponds to the DUO model
+# trained for 500K steps with curriculum learning, we train the
+# model for 500K more steps.
 srun python -u -m main \
-  loader.batch_size=32 \
-  loader.eval_batch_size=32 \
-  data=lm1b-wrap \
-  wandb.name=duo-base \
-  hydra.run.dir=/share/kuleshov/ssahoo/duo-base \
+  loader.batch_size=64 \
+  loader.eval_batch_size=64 \
+  data=openwebtext-split \
+  wandb.name=duo-owt-finetune \
   model=small \
   algo=duo_base \
-  model.length=128 \
-  sampling.num_sample_batches=0
+  model.length=1024 \
+  wandb.name=duo-base \
+  training.finetune_path=$finetune_path \
+  sampling.num_sample_batches=0 \
+  trainer.max_steps=500000 

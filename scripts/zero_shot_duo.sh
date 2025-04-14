@@ -12,7 +12,6 @@
 #SBATCH --open-mode=append            # Do not overwrite logs
 #SBATCH --requeue                     # Requeue upon preemption
 
-# checkpoint_path=/share/kuleshov/ssahoo/flow-ode/flow-ode-ntgT22-small-udlm-OWT/checkpoints/29-500000.ckpt
 checkpoint_path=/share/kuleshov/ssahoo/flow-ode/flow-ode-VlCQLK-small-conjugate-OWT-anneal/checkpoints/last.ckpt
 
 export HYDRA_FULL_ERROR=1
