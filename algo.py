@@ -78,6 +78,10 @@ class MDLM(trainer_base.AbsorbingState):
     super().__init__(config, tokenizer)
     self._validate_configuration()
 
+  def _validate_configuration(self):
+    # ancestral sampling isn't desirable because it's slow
+    assert self.sampler == 'ancestral_cache'
+
   def _process_model_output(self, model_output, xt, sigma):
     del sigma
     model_output[:, :, self.mask_index] += self.neg_infinity
@@ -365,7 +369,7 @@ class DUO_BASE(trainer_base.UniformState):
     assert diffusion_loss.ndim == 2
     return diffusion_loss
 
-  def _ddpm_update(self, x, t, dt, p_x0=None,
+  def _ancestral_update(self, x, t, dt, p_x0=None,
                    noise_removal_step=False):
     del p_x0
     _, alpha_t = self.noise(t)

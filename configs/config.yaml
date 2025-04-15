@@ -23,9 +23,9 @@ loader:
   pin_memory: True
 
 sampling:
-  predictor: ddpm  # analytic, ddpm, ddpm_cache
+  predictor: ancestral  # ancestral_cache (only for MDLM), ancestral, analytic
   steps: 1000
-  noise_removal: 'ancestral'  # 'ancestral', 'greedy', 'none'
+  noise_removal: ancestral  # 'ancestral', 'greedy', 'none'
   use_float64: True
   p_nucleus: 1.0
   num_sample_batches: 2  # Total samples: `num_gpus` * `loader.eval_batch_size` * num_sample_batches

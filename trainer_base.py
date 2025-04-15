@@ -490,7 +490,7 @@ class Diffusion(TrainerBase):
   def _analytic_update(self, x, t, dt):
     raise NotImplementedError
 
-  def _ddpm_update(self, x, t, dt, p_x0, noise_removal_step):
+  def _ancestral_update(self, x, t, dt, p_x0, noise_removal_step):
     raise NotImplementedError
 
   @torch.no_grad()
@@ -509,11 +509,11 @@ class Diffusion(TrainerBase):
     for i in range(num_steps):
       t = timesteps[i] * torch.ones(
         x.shape[0], 1, device=self.device)
-      if self.sampler == 'ddpm':
-        _, x = self._ddpm_update(
+      if self.sampler == 'ancestral':
+        _, x = self._ancestral_update(
           x=x, t=t, dt=dt, p_x0=None)
-      elif self.sampler == 'ddpm_cache':
-        p_x0_cache, x_next = self._ddpm_update(
+      elif self.sampler == 'ancestral_cache':
+        p_x0_cache, x_next = self._ancestral_update(
           x=x, t=t, dt=dt, p_x0=p_x0_cache)
         if (not torch.allclose(x_next, x)
             or self.time_conditioning):
@@ -529,7 +529,7 @@ class Diffusion(TrainerBase):
       if self.sampler == 'analytic':
         x = self._denoiser_update(x=x, t=t0)
       else:
-        _, x = self._ddpm_update(x=x, t=t0, dt=None,
+        _, x = self._ancestral_update(x=x, t=t0, dt=None,
                                  p_x0=p_x0_cache,
                                  noise_removal_step=True)
     elif self.config.sampling.noise_removal == 'greedy':
@@ -554,7 +554,7 @@ class Diffusion(TrainerBase):
       if target is not None:
         x[:, : -stride_length] = target
       for i in range(num_steps + 1):
-        p_x0_cache, x_next = self._ddpm_update(
+        p_x0_cache, x_next = self._ancestral_update(
           x=x, t=(1 - i * dt) * ones, dt=dt, p_x0=p_x0_cache)
         if (not torch.allclose(x_next, x)
             or self.time_conditioning):
@@ -643,7 +643,7 @@ class AbsorbingState(Diffusion):
     return self.mask_index * torch.ones(
       * batch_dims, dtype=torch.int64, device=self.device)
 
-  def _ddpm_update(self, x, t, dt, p_x0=None,
+  def _ancestral_update(self, x, t, dt, p_x0=None,
                    noise_removal_step=False):
     _, alpha_t = self.noise(t)
     if noise_removal_step:
