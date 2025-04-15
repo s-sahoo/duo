@@ -60,7 +60,7 @@ where `N` is the vocabulary size of the tokenizer.
 ### Checkpoints
 
 The checkpoints for the DUO models (distilled/undistilled) trained on OpenWebText for 1M training steps are available on:
-* [Huggingface](https://huggingface.co/subbham/duo)🤗.
+* [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
 * [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
 
 ### Slurm scripts
