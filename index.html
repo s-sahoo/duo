@@ -203,18 +203,23 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
+        <h2 class="title is-3">Our Contributions</h2>
         <div class="content has-text-justified">
-          <p>
-            Discrete diffusions models have been demonstrated to be surprisingly strong language models.
-            In this work, we show that discrete diffusion language models can be further improved by adapting
-            methods from continuous-state diffusion models. We establish a core property of uniform state diffusion:
-            it stems from an underlying Gaussian diffusion process. This property allows us to improve both training
-            by utilizing a curriculum learning strategy that reduces training variance and leads to \(\mathbf{2\times}\)
-            faster convergence, as well as sampling by adapting efficient distillation methods from continuous-state diffusion models.
-            As a result,  models surpass an autoregressive model's zero-shot perplexity on
-            3 out of 7 benchmarks and we manage to reduce the sampling steps by \(\textbf{two orders}\) of magnitude while preserving sample quality.
-          </p>
+            <ol>
+              <li>
+                We show that <b>uniform-state discrete diffusion emerges from Gaussian diffusion</b>,
+                enabling the transfer of techniques from continuous to discrete domains.
+              </li>
+              <li>
+                Building on this insight, we propose the DUO framework,
+                which improves training through a low-variance curriculum.
+              </li>
+              <li>
+                We further introduce Discrete Consistency Distillation, adapting consistency
+                distillation to the discrete setting and accelerating DUO sampling
+                by <b>two orders</b> of magnitude.
+              </li>
+            </ol>
         </div>
       </div>
     </div>
@@ -229,8 +234,9 @@
     <h2 class="title">Introduction</h2>
     <p>An eternal theme in mathematics is that discreteness emerges from underlying continuity.
       From quantum mechanics, where the quantized energy states of electrons arise as solutions
-      to continuous wave equations, to the Fourier decomposition of the Heaviside function,
-      which results in a trigonometric series, and to the binary logic of digital circuits,
+      to continuous wave equations,
+      <!-- to the Fourier decomposition of the Heaviside function, which results in a trigonometric series, and -->
+      to the binary logic of digital circuits,
       fundamentally driven by smooth analog currents, discreteness has repeatedly and naturally
       emerged from an underlying continuum. Our work continues this tradition by demonstrating
       that a discrete diffusion process is, in fact, an emergent phenomenon of an underlying
@@ -312,19 +318,31 @@
 
 
 <!--BibTex citation -->
-  <!-- <section class="section" id="BibTeX">
-    <div class="container is-max-desktop content">
-      <h2 class="title">BibTeX</h2>
-      <pre><code>@misc{sahoo2024simple,
-      title={Simple and Effective Masked Diffusion Language Models}, 
-      author={Subham Sekhar Sahoo and Marianne Arriola and Yair Schiff and Aaron Gokaslan and Edgar Marroquin and Justin T Chiu and Alexander Rush and Volodymyr Kuleshov},
-      year={2024},
-      eprint={2406.07524},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
-  }</code></pre>
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+
+    <div style="position: relative;">
+      <button onclick="copyBibTeX()" style="position: absolute; top: 10px; right: 10px; z-index: 1;">
+        Copy
+      </button>
+      <pre><code id="bibtex-code">@inproceedings{sahoo2025diffusion,
+  title={The Diffusion Duality},
+  author={Sahoo, Subham Sekhar and Deschenaux, Justin and Gokaslan, Aaron and Wang, Guanghan and Chiu, Justin T and Kuleshov, Volodymyr},
+  booktitle={ICLR 2025 Workshop on Deep Generative Model in Machine Learning: Theory, Principle and Efficacy}
+}</code></pre>
     </div>
-</section> -->
+  </div>
+</section>
+
+<script>
+  function copyBibTeX() {
+    const code = document.getElementById('bibtex-code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+      alert("BibTeX copied to clipboard!");
+    });
+  }
+</script>
 <!--End BibTex citation -->
 
 
