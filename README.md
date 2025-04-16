@@ -7,7 +7,7 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=CB0Ub2yXjC)
 [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
-**TL;DR:** Discrete diffusion emerges from Gaussian diffusion, enabling **few-step generation** in diffusion language models.
+**TL;DR:** Discrete diffusion emerges from Gaussian diffusion, unlocking **few-step generation** in diffusion language models.
 
 <div align="center">
   <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
@@ -75,12 +75,12 @@ sbatch scripts/ABC_XYZ.sh
 
 To train DUO use the following scripts:
 * LM1B
-  * sentencepacking [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/huwt0ek3): [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh). 
+  * w/ sentencepacking [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/huwt0ek3): [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh). 
   * w/o sentencepacking (same as in MDLM, SEDD): [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh).
 * OWT: [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
 
 
-**Curriculum Learning increases memory consumption.** To manage this during OWT training, one may consider a two-stage approach:
+**Curriculum Learning increases memory consumption.** For faster training on OWT, one may consider a two-stage approach:
 * Stage 1: Curriculum Learning for `500K` steps with a reduced batch size (`loader.batch_size=32` on 8 GPU A100 node) by specifying `trainer.max_steps=500000` in [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh). 
 * Stage 2 [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/h74aekb3): Finetuning it for `500K` more steps with a larger batch size (`loader.batch_size=64` on 8 GPU A100 node) using [`scripts/train_owt_duo_finetune.sh`](./scripts/train_owt_duo_finetune.sh). 
 
