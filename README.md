@@ -112,7 +112,7 @@ To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_du
 To generate samples from a pre-trained model use one of the following command.
 Set 
 * `sampling.noise_removal=greedy` to use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
-* `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces samples with worse generative perplexity but higher entropy.
+* `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces more diverse samples (higher entropy) but with worse generative perplexity.
 
 We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗. To sample from a HF model, run the following command:
 ```bash
