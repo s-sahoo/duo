@@ -86,10 +86,16 @@ To train DUO use the following scripts:
 
 
 **Curriculum Learning increases memory consumption.** For faster training on OWT, one may consider a two-stage approach:
-* Stage 1: Curriculum Learning for `500K` steps with a reduced batch size (`loader.batch_size=32` on 8 GPU A100 node) by specifying `trainer.max_steps=500000` in [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh). 
-* Stage 2 [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/h74aekb3): Finetuning it for `500K` more steps with a larger batch size (`loader.batch_size=64` on 8 GPU A100 node) using [`scripts/train_owt_duo_finetune.sh`](./scripts/train_owt_duo_finetune.sh). 
+* `Stage 1`: Curriculum Learning for `500K` steps
+  * Use [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh) with the following modifications:
+    * Reduced batch size (`loader.batch_size=32` on an `80 GB` GPU)
+    * `trainer.max_steps=500000` 
+* `Stage 2`: Finetuning the checkpoint from `stage 1` for `500K` more steps
+  * Training script: [`scripts/train_owt_duo_finetune.sh`](scripts/train_owt_duo_finetune.sh)
+  * Features a larger batch size (`loader.batch_size=64` on an `80 GB`) than `stage 1`.
+  * [Wandb run](https://api.wandb.ai/links/kuleshov-group/h74aekb3): Although this run uses a `stage 1` checkpoint trained for `1M` steps, the results reported in the paper correspond to the checkpoint at `500K` steps.
 
-Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus` is less than the global batch size (`loader.global_batch_size`), PyTorch Lightning will resort to gradient accumulation. 
+Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
 # Distillation
 <a name="distillation"></a>
