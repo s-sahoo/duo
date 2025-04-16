@@ -92,12 +92,11 @@ Control the batch size / GPU using the argument `loader.batch_size`. If `loader.
 To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh)
 
 
-# Eval 
-<a name="eval"></a>
-To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_duo.sh`](scripts/eval_owt_duo.sh). To compute the zero shot perplexities use [`scripts/zero_shot_duo.sh`](scripts/zero_shot_duo.sh).
 
-# Sampling
+# Sampling & Eval
 <a name="sampling"></a>
+To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_duo.sh`](scripts/eval_owt_duo.sh) and for zero shot perplexities use [`scripts/zero_shot_duo.sh`](scripts/zero_shot_duo.sh).
+
 
 To generate samples from a pre-trained model use one of the following command.
 Set 
@@ -119,8 +118,7 @@ python main.py \
   sampling.noise_removal=greedy \
   +wandb.offline=true 
 ```
-
-We’ve also released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT here: [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh), making sure to specify the paths correctly.
+We’ve also released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT in this [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh) while specifying the paths correctly.
 
 
 # Baselines
