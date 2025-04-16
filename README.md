@@ -50,7 +50,7 @@ pip install -r requirements.txt
 pip install flash_attn==2.7.4.post1
 ```
 
-### Integral Cache [Important]
+### :izakaya_lantern: Integral Cache [Important]
 Curriculum Learning (`Sec. 4.1`) and Discrete Consistency Distillation (`Sec. 4.2`) require mapping Gaussian to discrete diffusion parameters via the Diffusion Transformation operator (`Sec. 3`), which involves computing an integral (dependent only on the tokenizer’s vocabulary size). To avoid slowing down training, we pre-compute and cache this integral. Cached operators for `bert-base-uncased` (LM1B) and `gpt2` (OWT) are in [`integral/`](integral). For other tokenizers, run: 
 ```
 python utils.py --vocab_size=N
