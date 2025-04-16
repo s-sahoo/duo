@@ -75,8 +75,13 @@ sbatch scripts/ABC_XYZ.sh
 
 To train DUO use the following scripts:
 * LM1B
-  * w/ sentencepacking [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/huwt0ek3): [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh). 
-  * w/o sentencepacking (same as in MDLM, SEDD): [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh).
+  * w/ sentencepacking (same as in D3PM)
+    * Training script: [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh)
+    * [Wandb run](https://api.wandb.ai/links/kuleshov-group/huwt0ek3) 
+  * w/o sentencepacking (same as in MDLM, SEDD)
+    * Training script: [`scripts/train_lm1b_duo.sh`](./scripts/train_lm1b_duo.sh)
+    * [Wandb run](https://api.wandb.ai/links/sahoo-diffusion/lkv5z3tm)
+    
 * OWT: [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
 
 
@@ -84,7 +89,7 @@ To train DUO use the following scripts:
 * Stage 1: Curriculum Learning for `500K` steps with a reduced batch size (`loader.batch_size=32` on 8 GPU A100 node) by specifying `trainer.max_steps=500000` in [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh). 
 * Stage 2 [[Wandb run]](https://api.wandb.ai/links/kuleshov-group/h74aekb3): Finetuning it for `500K` more steps with a larger batch size (`loader.batch_size=64` on 8 GPU A100 node) using [`scripts/train_owt_duo_finetune.sh`](./scripts/train_owt_duo_finetune.sh). 
 
-Control the batch size / GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus` is less than the global batch size (`loader.global_batch_size`), PyTorch Lightning will resort to gradient accumulation. 
+Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus` is less than the global batch size (`loader.global_batch_size`), PyTorch Lightning will resort to gradient accumulation. 
 
 # Distillation
 <a name="distillation"></a>
