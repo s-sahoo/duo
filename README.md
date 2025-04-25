@@ -1,4 +1,4 @@
-# [The Diffusion Duality](http://arxiv.org/abs/2406.07524)
+# The Diffusion Duality
 By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https://mariannearriola.github.io), [Aaron Gokaslan](https://skylion007.github.io),
 [Guanghan Wang](https://tech.cornell.edu/people/guanghan-wang/), [Justin Chiu](https://justinchiu.netlify.app), [Volodymyr Kuleshov](https://www.cs.cornell.edu/~kuleshov/)
 
