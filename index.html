@@ -168,10 +168,7 @@
       <h4 class="subtitle has-text-centered">
         An illustration of uniform state discrete diffusion (top) and
         the underlying Gaussian diffusion (bottom). While both are separate Markov processes,
-        applying \(\texttt{arg max}\) maps Gaussian latents \(\mathbf{w}_t \in \mathbb{R}^n\) to discrete latents
-        \(\mathbf{z}_t \in \mathcal{V}\), transforming their marginals from
-         \(K\)-dimensional Gaussian distribution to \(K\)-dimensional categorical distribution and adjusting diffusion parameters from \(\tilde{\alpha}_t\)
-        to \(\alpha_t = \mathcal{T}(\tilde{\alpha}_t)\).
+        The \(\texttt{arg max}\)operator transforms a Gaussian diffusion process into a uniform-state discrete diffusion process; see the paper for details.
         <!-- The ELBOs of both processes are related by \Eqn{eqn:elbo_inequality}. -->
       </h4>
       <!-- <img src="static/images/output.gif" width="100%" alt="A descriptive text for the GIF" > -->
