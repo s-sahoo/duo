@@ -226,7 +226,6 @@
     <p>An eternal theme in mathematics is that discreteness emerges from underlying continuity.
       From quantum mechanics, where the quantized energy states of electrons arise as solutions
       to continuous wave equations,
-      <!-- to the Fourier decomposition of the Heaviside function, which results in a trigonometric series, and -->
       to the binary logic of digital circuits,
       fundamentally driven by smooth analog currents, discreteness has repeatedly and naturally
       emerged from an underlying continuum. Our work continues this tradition by demonstrating
@@ -243,69 +242,10 @@
       The standard measure of language modeling performance is log-likelihood: when controlling for parameter count,
       prior work reports a sizable log-likelihood gap between AR and diffusion models.
     </p> -->
-  <!-- Continuous Diffusion -->  
-    <h4 class="subtitle">Gaussiasn Diffusion</h3>
-    <p>[Will be completed by April 19, 2025]
-      <!-- Diffusion models are trained to iteratively undo a forward corruption process  q  that corrupts the clean data  $\mathbf{x} \in \mathbb{R}^{n}$  by adding Gaussian noise. In the reverse generation process, the trained model iteratively denoises the Gaussian noise to generate clean inputs that correspond to the input data distribution. -->
-    </p>
-    
-    <!-- Discrete Diffusion -->
-    <h4 class="subtitle">Discrete Diffusion</h3>
-    <p>[Will be completed by April 19, 2025]
-      <!-- Applications of diffusion modeling to discrete data can be categorized into two broad areas. The first involves embedding discrete structures in continuous space and then performing the Gaussian diffusion defined above on these continuous representations. More related to our method are works that define a diffusion process directly on discrete structures. <a href="https://arxiv.org/abs/2107.03006">D3PM </a> introduces a framework with a Markov forward process \( q(z_t|z_{t−1}) = \text{Cat}(z_t; Q_t z_{t−1}) \), defined by the multiplication of matrices \( Q_t \in \mathbb{R}^{n \times n} \) over \( T \) discrete time steps. The matrix \( Q_t \) is designed such that \( Q_T \cdot Q_{T-1} \cdots Q_1 \mathbf{x} \) converges to a stationary distribution. -->
-    </p>
   </div>
   </div>
 
 </section>
-<!-- End Diffusion Models -->
-
-<!-- Simple Masked Diffusion Models -->
-<section class="section" id="DiffusionDuality">
-  <div class="container is-max-desktop">
-  <div class="content is-medium">
-    <h2 class="title">The Diffusion Duality</h2>
-    <p>[Will be completed by April 19, 2025] Equivalence of Marginals, ELBO relation.</p>
-    <h4 class="subtitle">Marginals</h4>
-    <p>[Will be completed by April 19, 2025]</p>
-    
-    <h4>ELBO</h4>
-    <p> [Will be completed by April 19, 2025] </p>
-
-    </div>
-  </div>
-</section>
-
-<section class="section" id="Experiments">
-  <div class="container is-max-desktop">
-  <div class="content is-medium">
-    <h2 class="title">Experiments</h2>
-    <h4> Curriculum Learning</h4>
-    <p> [Will be completed by April 19, 2025]
-    </p>
-    <h4>Distillation</h4>
-    <p> [Will be completed by April 19, 2025]</p>
-
-    </div>
-  </div>
-</section>
-
-<!-- End Diffusion Models -->
-
-
-<!-- Paper poster -->
-<!-- <section class="hero is-small is-light">
-  <div class="hero-body">
-    <div class="container">
-      <h2 class="title">Poster</h2>
-
-      <iframe  src="static/pdfs/MDLM-NeurIPS.pdf" width="100%" height="940">
-          </iframe>
-        
-      </div>
-    </div>
-  </section> -->
-<!--End paper poster -->
 
 
 <!--BibTex citation -->
