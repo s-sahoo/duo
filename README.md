@@ -147,8 +147,8 @@ This repository was built off of [MDLM's Github repository](https://github.com/k
 sahoo2025the,
 title={The Diffusion Duality},
 author={Subham Sekhar Sahoo and Justin Deschenaux and Aaron Gokaslan and Guanghan Wang and Justin T Chiu and Volodymyr Kuleshov},
-booktitle={ICLR 2025 Workshop on Deep Generative Model in Machine Learning: Theory, Principle and Efficacy},
+booktitle={Forty-second International Conference on Machine Learning},
 year={2025},
-url={https://openreview.net/forum?id=CB0Ub2yXjC}
+url={https://openreview.net/forum?id=9P9Y8FOSOk}
 }
 ```
