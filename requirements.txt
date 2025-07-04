@@ -1,5 +1,5 @@
 # conda install nvidia/label/cuda-12.4.0::cuda-toolkit
-datasets==2.18.0
+datasets==2.15.0
 einops==0.7.0
 fsspec==2024.2.0
 git-lfs==1.6
