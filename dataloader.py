@@ -476,8 +476,7 @@ def get_dataset(dataset_name,
       cache_dir=cache_dir,
       revision=revision,
       streaming=False,
-      num_proc=num_proc,
-      trust_remote_code=True)
+      num_proc=num_proc)
   elif dataset_name == 'openwebtext-valid':
     dataset = datasets.load_dataset(
       'openwebtext',
@@ -485,19 +484,16 @@ def get_dataset(dataset_name,
       cache_dir=cache_dir,
       revision=revision,
       streaming=False,
-      num_proc=num_proc,
-      trust_remote_code=True)
+      num_proc=num_proc)
   elif dataset_name == 'scientific_papers_arxiv':
     dataset = datasets.load_dataset(
       'scientific_papers', 'arxiv',
-      trust_remote_code=True,
       cache_dir=cache_dir,
       streaming=streaming,
       revision=revision)
   elif dataset_name == 'scientific_papers_pubmed':
     dataset = datasets.load_dataset(
       'scientific_papers', 'pubmed',
-      trust_remote_code=True,
       cache_dir=cache_dir,
       streaming=streaming,
       revision=revision)
@@ -521,7 +517,6 @@ def get_dataset(dataset_name,
       dataset_name,
       cache_dir=cache_dir,
       streaming=streaming,
-      trust_remote_code=True,
       revision=revision)
 
   if dataset_name in ['lambada', 'openwebtext-train',
