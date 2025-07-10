@@ -64,7 +64,7 @@ The checkpoints for the DUO models (distilled/undistilled) trained on OpenWebTex
 * [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
 
 ### Slurm scripts
-Run `mkdir watch_folder` to create a directory to store saved models and slurm logs
+Run `mkdir watch_folder` to create a directory to store slurm logs
 and then run any script in [`scripts/`](scripts) as a slurm job:
 ```bash
 sbatch scripts/ABC_XYZ.sh
