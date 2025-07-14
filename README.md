@@ -93,7 +93,7 @@ To train DUO use the following scripts:
 * `Stage 2`: Finetuning the checkpoint from `stage 1` for `500K` more steps
   * Training script: [`scripts/train_owt_duo_finetune.sh`](scripts/train_owt_duo_finetune.sh)
   * Features a larger batch size (`loader.batch_size=64` on an `80 GB`) than `stage 1`.
-  * [Wandb run](https://api.wandb.ai/links/kuleshov-group/h74aekb3): Although this run uses a `stage 1` checkpoint trained for `1M` steps, the results reported in the paper correspond to the checkpoint at `500K` steps.
+  * [Wandb run](https://api.wandb.ai/links/kuleshov-group/h74aekb3): This run resumes training a `stage 1` checkpoint. Although trained for `1M` steps, the results reported in the paper correspond to the checkpoint at `500K` steps.
 
 Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
