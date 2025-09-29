@@ -1,4 +1,4 @@
-# [The Diffusion Duality (ICML 2025)](https://arxiv.org/abs/2506.10892v1)
+# [The Diffusion Duality (ICML 2025)](https://arxiv.org/abs/2506.10892)
 By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https://jdeschena.github.io), [Aaron Gokaslan](https://skylion007.github.io),
 [Guanghan Wang](https://tech.cornell.edu/people/guanghan-wang/), [Justin Chiu](https://justinchiu.netlify.app), [Volodymyr Kuleshov](https://www.cs.cornell.edu/~kuleshov/)
 
