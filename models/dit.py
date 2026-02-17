@@ -110,7 +110,7 @@ def rotate_half(x):
 
 
 def split_and_apply_rotary_pos_emb(qkv, rotary_cos_sin):
-  with torch.cuda.amp.autocast(enabled=False):
+  with torch.amp.autocast('cuda', enabled=False):
     cos, sin = rotary_cos_sin
     cos = cos.to(qkv.dtype)
     sin = sin.to(qkv.dtype)
@@ -155,7 +155,7 @@ class LayerNorm(nn.Module):
     self.weight = nn.Parameter(torch.ones([dim]))
     self.dim = dim
   def forward(self, x):
-    with torch.cuda.amp.autocast(enabled=False):
+    with torch.amp.autocast('cuda', enabled=False):
       x = F.layer_norm(x.float(), [self.dim])
     return x * self.weight[None, None, :]
 
@@ -276,7 +276,7 @@ class DDiTBlockCausal(nn.Module):
       'b s (three h d) -> b s three h d',
       three=3,
       h=self.n_heads)
-    with torch.cuda.amp.autocast(enabled=False):
+    with torch.amp.autocast('cuda', enabled=False):
       cos, sin = rotary_cos_sin
       qkv = apply_rotary_pos_emb(
         qkv, cos.to(qkv.dtype), sin.to(qkv.dtype)
@@ -385,8 +385,16 @@ class EmbeddingLayer(nn.Module):
     self.embedding = nn.Parameter(torch.empty((vocab_dim, dim)))
     torch.nn.init.kaiming_uniform_(self.embedding, a=math.sqrt(5))
 
-  def forward(self, x):
-    if x.ndim == 2:
+  def forward(self, x, weights=None):
+    if weights is not None:
+      bs, seq_len, k = x.shape
+      flat_x = x.reshape(-1, k)
+      flat_w = weights.reshape(-1, k).float()
+      bag = F.embedding_bag(flat_x, self.embedding.float(),
+                            per_sample_weights=flat_w,
+                            mode='sum')
+      return bag.view(bs, seq_len, -1)
+    elif x.ndim == 2:
       return self.embedding[x]
     assert x.ndim == 3
     return torch.einsum(
@@ -410,7 +418,6 @@ class DDiTFinalLayer(nn.Module):
                                         bias=True)
       self.adaLN_modulation.weight.data.zero_()
       self.adaLN_modulation.bias.data.zero_()
-
 
   def forward(self, x, c):
     x = self.norm_final(x)
@@ -467,18 +474,17 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
     else:
       return  bias_dropout_add_scale_fused_inference
 
-  def forward(self, x, sigma):
-    x = self.vocab_embed(x)
+  def forward(self, x, time_cond, weights=None):
+    x = self.vocab_embed(x, weights)
     if self.causal:
-      t_cond = None
+      time_cond = None
     else:
-      t_cond = F.silu(self.sigma_map(sigma))
+      time_cond = F.silu(self.sigma_map(time_cond))
 
     rotary_cos_sin = self.rotary_emb(x)
-
-    with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+    with torch.amp.autocast('cuda', dtype=torch.bfloat16):
       for i in range(len(self.blocks)):
-        x = self.blocks[i](x, rotary_cos_sin, c=t_cond)
-      x = self.output_layer(x, c=t_cond)
+        x = self.blocks[i](x, rotary_cos_sin, c=time_cond)
+      x = self.output_layer(x, c=time_cond)
 
     return x

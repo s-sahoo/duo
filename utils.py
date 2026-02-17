@@ -7,7 +7,6 @@ Copied from https://docs.python.org/3/howto/logging-cookbook.html#using-a-contex
 import argparse
 import logging
 import os
-import sys
 import pickle
 import time
 
@@ -16,6 +15,7 @@ import lightning
 import numpy as np
 import torch
 from scipy.integrate import quad
+from scipy.optimize import curve_fit
 from scipy.stats import norm
 from timm.scheduler import CosineLRScheduler
 
@@ -229,7 +229,13 @@ def top_k_top_p_filtering(
 
     if dim != -1:
       logits = torch.transpose(logits, dim, -1)
-
+    
+    # Re-normalize as in ReMDM. Alternatively, 
+    #  could apply a log-softmax. This assumes that the input
+    #  tensor `logits` has been pre-processed with log_softmax.
+    probs = logits.exp()
+    Z = probs.sum(-1, keepdim=True)
+    logits = (probs / Z).log()
     return logits
 
 
@@ -327,6 +333,171 @@ def test_cache_prob_usdm_in_partition(
     np.mean(pt_errors), np.mean(data['pt'] ** 2)))
   print('Integral Grad MSE:{} Integral Grad Squared:{:.4f}'.format(
     np.mean(grad_pt_errors), np.mean(data['grad_pt'] ** 2)))
+
+
+def compute_duo_series_coefficients(num_coefficients, vocab_size):
+  def integrand_m(z, n, K):
+      z = np.float64(z)
+      return z**n * norm.pdf(z) * norm.cdf(z)**(K-1)
+    
+  def integrand_i(z, n, K):
+    z = np.float64(z)
+    return z ** (n+1) * norm.pdf(z) * norm.cdf(z) ** (K-1)
+  
+  arange = np.cumprod(np.arange(1, num_coefficients
+                                ).astype(np.float64))
+  factorials = np.concatenate([[1.0], arange], 
+                              dtype=np.float64)
+  lo = np.array([-100], dtype=np.float64)
+  hi = np.array([100], dtype=np.float64)
+  coefficients_m = []
+  coefficients_i = []
+
+  for n in range(num_coefficients):
+    f = lambda z: integrand_m(np.float64(z), np.float64(n), 
+                              vocab_size)
+    g = lambda z: integrand_i(np.float64(z), np.float64(n), 
+                              vocab_size)
+    m, _ = quad(f, lo, hi)
+    i, _ = quad(g, lo, hi)
+    coefficients_m.append(m / factorials[n])
+    coefficients_i.append(i / factorials[n])
+
+  return (torch.tensor(coefficients_m)[None], 
+          torch.tensor(coefficients_i)[None])
+
+
+def compute_duo_gamma_to_alpha_dalpha_series(
+    gamma_t, coefficients_m, coefficients_i, power_arange, 
+    vocab_size, gamma_min, gamma_max):
+  gamma_t = gamma_t.to(torch.float64)[:, None]
+    
+  sigmoid_neg_gamma = torch.sigmoid(-gamma_t)
+  sigmoid_gamma = torch.sigmoid(gamma_t)
+  alpha_t_squared = sigmoid_neg_gamma
+  alpha_t = alpha_t_squared.sqrt()
+
+  one_minus_alpha_t_squared = 1 - alpha_t_squared
+  mu_t = alpha_t / one_minus_alpha_t_squared.sqrt()
+  
+  arange = power_arange.to(device=gamma_t.device)
+  mu_t_pow = mu_t ** arange
+  
+  exp_term = (-mu_t**2/2).exp().squeeze(-1)
+  vocab_scale = vocab_size / (vocab_size - 1)
+  
+  # Compute alpha
+  sum_term_alpha = (mu_t_pow * coefficients_m).sum(-1)
+  alpha_usdm = (sum_term_alpha * exp_term - 1 / vocab_size) * vocab_scale
+
+  # Compute alpha'
+  sum_term_dalpha = (mu_t_pow * (coefficients_i - mu_t * coefficients_m)).sum(-1)
+  dalpha_usdm = exp_term * sum_term_dalpha * vocab_scale
+  
+  final_scale = - (sigmoid_gamma.squeeze(-1) 
+                  * sigmoid_neg_gamma.squeeze(-1) ** 0.5 * 
+                  0.5 * (gamma_max - gamma_min))
+  dalpha_usdm = dalpha_usdm / one_minus_alpha_t_squared.squeeze(-1) ** 1.5 * final_scale
+  return alpha_usdm.squeeze(-1), dalpha_usdm.squeeze(-1)
+
+
+def duo_t_to_alpha_dalpha_sigm_corrected(
+  t, a: float, b: float, c: float, d: float, e: float, 
+  f: float, alpha: float):
+  # Shared quantities
+  sigm_bc = (torch.tanh(b * t + c) + 1) / 2
+  sigm_ef = (torch.tanh(e * t + f) + 1) / 2
+
+  # Compute alpha_t
+  base = a * sigm_bc + d
+  edge_gate = 1 - 4 * sigm_ef * (1 - sigm_ef)
+  edge_correction = alpha * (t - 0.5) * edge_gate
+  alpha_t = base + edge_correction
+
+  # Compute d_alpha_t
+  dbase = a * b * sigm_bc * (1 - sigm_bc)
+  dgate = -4 * e * sigm_ef * (1 - sigm_ef) * (1 - 2 * sigm_ef)
+  dcorrection = alpha * edge_gate + alpha * (t - 0.5) * dgate
+  dalpha_t = dbase + dcorrection
+  return alpha_t, dalpha_t
+
+
+def duo_to_alpha_dalpha_sigmoid(t: torch.Tensor, a: float, 
+                                b: float, c: float, d: float):
+  sigm_bc = (torch.tanh(b * t + c) + 1) / 2
+  alpha_t = a * sigm_bc + d
+  dalpha_t = a * b * sigm_bc * (1 - sigm_bc)
+  return alpha_t, dalpha_t
+
+
+def duo_to_alpha_dalpha_poly(t: torch.Tensor, 
+                              *coefficients: float):
+  alpha_t = coefficients[0]  # a0 term
+  for i, a in enumerate(coefficients[1:], 1):
+    alpha_t = alpha_t + a * t**i
+    
+  dalpha_t = coefficients[1]  # a1 term
+  for i, a in enumerate(coefficients[2:], 2):
+    dalpha_t = dalpha_t + i * a * t**(i-1)
+    
+  return alpha_t, dalpha_t
+
+
+def compute_duo_operator_approx(num_coefficients, vocab_size, 
+                                gamma_min, gamma_max, 
+                                fct_name='sigmoid'):
+  series_m, series_i = compute_duo_series_coefficients(
+    num_coefficients, vocab_size)
+  ts = torch.linspace(0, 1, steps=100_000)
+  gammas = gamma_min + ts * (gamma_max - gamma_min)
+  power_arange = torch.arange(num_coefficients, 
+                              dtype=torch.float64)[None]
+  alpha_approx = compute_duo_gamma_to_alpha_dalpha_series(
+    gammas, series_m, series_i, power_arange, vocab_size, 
+    gamma_min, gamma_max)[0].float()
+  
+  t_np = ts.numpy()
+  y_np = alpha_approx.numpy()
+
+  def sigmoid(x):
+    return (np.tanh(x) + 1) / 2
+  
+  if fct_name == 'sigmoid':
+    def func(t, a, b, c, d):
+      return a * sigmoid(b * t + c) + d
+    p0 = [0.5, 2.0, -1.0, 0.5]
+
+  elif fct_name == 'sigmoid-edge-corrected':
+    def func(t, a, b, c, d, e, f, alpha):
+      base = a * sigmoid(b * t + c) + d
+      edge_gate = 1 - 4 * sigmoid(e * t + f) * sigmoid(-e * t - f)
+      edge_correction = alpha * (t - 0.5) * edge_gate
+      return base + edge_correction
+    p0 = [0.5, 2.0, -1.0, 0.1, 3.0, 0.0, 0.1]
+  elif fct_name == 'poly3':
+    def func(t, a0, a1, a2, a3):
+      return a0 + a1*t + a2*t**2 + a3*t**3
+    p0 = [0.1] * 4
+  elif fct_name == 'poly5':
+    def func(t, a0, a1, a2, a3, a4, a5):
+      return a0 + a1*t + a2*t**2 + a3*t**3 + a4*t**4 + a5*t**5
+    p0 = [0.1] * 6
+  elif fct_name == 'poly7':
+    def func(t, a0, a1, a2, a3, a4, a5, a6, a7):
+      return (a0 + a1*t + a2*t**2 + a3*t**3 + 
+              a4*t**4 + a5*t**5 + a6*t**6 + a7*t**7)
+    p0 = [0.1] * 8
+  elif fct_name == 'poly9':
+    def func(t, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9):
+      return (a0 + a1*t + a2*t**2 + a3*t**3 + a4*t**4 + 
+              a5*t**5 + a6*t**6 + a7*t**7 + a8*t**8 + a9*t**9)
+    p0 = [0.1] * 10
+  else:
+    raise ValueError(fct_name)
+  
+  popt, _ = curve_fit(func, t_np, y_np, p0=p0, maxfev=10000)
+  preds = func(t_np, *popt)
+  return list(popt), y_np, preds, t_np
 
 
 if __name__ == "__main__":
