@@ -249,10 +249,10 @@ class TrainerBase(L.LightningModule):
     if nn_input_idxs is None:
       nn_input_idxs = xt
 
-    time_cond = self._process_time_cond(time_cond)
+    sigma = self._process_sigma(sigma)
     with torch.amp.autocast('cuda', dtype=torch.float32):
       model_output = self.backbone(
-        x=nn_input_idxs, time_cond=time_cond, weights=weights)
+        x=nn_input_idxs, sigma=sigma, weights=weights)
       if self.temperature != 1:
         model_output = model_output / self.temperature
     return self._process_model_output(
@@ -516,7 +516,6 @@ class Diffusion(TrainerBase):
     for i in range(num_steps):
       t = timesteps[i] * torch.ones(
         x.shape[0], 1, device=self.device)
-
       if self.sampler == 'ancestral':
         _, x = self._ancestral_update(
           x=x, t=t, dt=dt, p_x0=None)

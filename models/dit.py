@@ -474,17 +474,17 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
     else:
       return  bias_dropout_add_scale_fused_inference
 
-  def forward(self, x, time_cond, weights=None):
+  def forward(self, x, sigma, weights=None):
     x = self.vocab_embed(x, weights)
     if self.causal:
-      time_cond = None
+      t_cond = None
     else:
-      time_cond = F.silu(self.sigma_map(time_cond))
+      t_cond = F.silu(self.sigma_map(time_cond))
 
     rotary_cos_sin = self.rotary_emb(x)
     with torch.amp.autocast('cuda', dtype=torch.bfloat16):
       for i in range(len(self.blocks)):
-        x = self.blocks[i](x, rotary_cos_sin, c=time_cond)
-      x = self.output_layer(x, c=time_cond)
+        x = self.blocks[i](x, rotary_cos_sin, c=t_cond)
+      x = self.output_layer(x, c=t_cond)
 
     return x
