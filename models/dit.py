@@ -479,7 +479,7 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
     if self.causal:
       t_cond = None
     else:
-      t_cond = F.silu(self.sigma_map(time_cond))
+      t_cond = F.silu(self.sigma_map(sigma))
 
     rotary_cos_sin = self.rotary_emb(x)
     with torch.amp.autocast('cuda', dtype=torch.bfloat16):

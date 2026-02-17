@@ -253,8 +253,6 @@ class TrainerBase(L.LightningModule):
     with torch.amp.autocast('cuda', dtype=torch.float32):
       model_output = self.backbone(
         x=nn_input_idxs, sigma=sigma, weights=weights)
-      if self.temperature != 1:
-        model_output = model_output / self.temperature
     return self._process_model_output(
       model_output=model_output, xt=xt, sigma=sigma)
 
