@@ -221,7 +221,8 @@ def top_k_top_p_filtering(
         sorted_indices_to_remove[..., :-1].clone()
       sorted_indices_to_remove[..., 0] = 0
 
-      mask_to_remove = torch.empty_like(sorted_indices_to_remove)
+      mask_to_remove = torch.empty_like(
+        sorted_indices_to_remove)
       mask_to_remove.scatter_(dim=-1,
                               index=sorted_indices,
                               src=sorted_indices_to_remove)
@@ -335,7 +336,8 @@ def test_cache_prob_usdm_in_partition(
     np.mean(grad_pt_errors), np.mean(data['grad_pt'] ** 2)))
 
 
-def compute_duo_series_coefficients(num_coefficients, vocab_size):
+def compute_duo_series_coefficients(num_coefficients, 
+                                    vocab_size):
   def integrand_m(z, n, K):
       z = np.float64(z)
       return z**n * norm.pdf(z) * norm.cdf(z)**(K-1)
@@ -388,16 +390,20 @@ def compute_duo_gamma_to_alpha_dalpha_series(
   
   # Compute alpha
   sum_term_alpha = (mu_t_pow * coefficients_m).sum(-1)
-  alpha_usdm = (sum_term_alpha * exp_term - 1 / vocab_size) * vocab_scale
+  alpha_usdm = (sum_term_alpha * exp_term - 1 \
+              / vocab_size) * vocab_scale
 
   # Compute alpha'
-  sum_term_dalpha = (mu_t_pow * (coefficients_i - mu_t * coefficients_m)).sum(-1)
+  sum_term_dalpha = (
+    mu_t_pow * (coefficients_i - mu_t * coefficients_m)).sum(-1)
   dalpha_usdm = exp_term * sum_term_dalpha * vocab_scale
   
   final_scale = - (sigmoid_gamma.squeeze(-1) 
                   * sigmoid_neg_gamma.squeeze(-1) ** 0.5 * 
                   0.5 * (gamma_max - gamma_min))
-  dalpha_usdm = dalpha_usdm / one_minus_alpha_t_squared.squeeze(-1) ** 1.5 * final_scale
+  dalpha_usdm = dalpha_usdm \
+              / one_minus_alpha_t_squared.squeeze(-1) ** 1.5 \
+              * final_scale
   return alpha_usdm.squeeze(-1), dalpha_usdm.squeeze(-1)
 
 
@@ -470,7 +476,8 @@ def compute_duo_operator_approx(num_coefficients, vocab_size,
   elif fct_name == 'sigmoid-edge-corrected':
     def func(t, a, b, c, d, e, f, alpha):
       base = a * sigmoid(b * t + c) + d
-      edge_gate = 1 - 4 * sigmoid(e * t + f) * sigmoid(-e * t - f)
+      edge_gate = 1 - 4 * sigmoid(e * t + f) \
+                  * sigmoid(-e * t - f)
       edge_correction = alpha * (t - 0.5) * edge_gate
       return base + edge_correction
     p0 = [0.5, 2.0, -1.0, 0.1, 3.0, 0.0, 0.1]

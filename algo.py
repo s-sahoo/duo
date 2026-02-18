@@ -439,8 +439,9 @@ def _sample_k_int(bs: int, l: int, k: int, max_value: int,
   return out
 
 
-def _sample_topk_gaussian(N: int, sigma: Optional[torch.Tensor]=None, 
-  l: int=0, k: int=0, batch: int=None, device: str=None, 
+def _sample_topk_gaussian(N: int, 
+  sigma: Optional[torch.Tensor]=None, l: int=0, k: int=0, 
+  batch: int=None, device: str=None, 
   dtype: torch.dtype=torch.float64):
   """
   Sample from the order statistic of N Gaussians with zero
@@ -469,7 +470,7 @@ def _sample_topk_gaussian(N: int, sigma: Optional[torch.Tensor]=None,
 
 
 def _sample_topk_and_extra(N: int, alpha: torch.Tensor, 
-                          sigma: torch.Tensor, l: int, k: int):
+  sigma: torch.Tensor, l: int, k: int):
   """
   Sample the top k order statistics between N - 1 zero mean 
   Gaussians, and a single Gaussian with mean alpha.
@@ -485,7 +486,7 @@ def _sample_topk_and_extra(N: int, alpha: torch.Tensor,
 
 
 def _log_mean_exp_trunc_normal(c: torch.Tensor, 
-                              sigma: torch.Tensor):
+                               sigma: torch.Tensor):
   """
   Compute log(E[exp(X) | X < c] for X ~ N(0, sigma^2).
   Closed-form expression:
@@ -536,7 +537,8 @@ def _sample_tempered_softmax_topk(
   log_extra = extra * inverse_temperature
   extra_not_in_topk = ~is_extra_in_topk
   log_extra_masked = torch.full_like(log_tail, float('-inf'))
-  log_extra_masked[extra_not_in_topk] = log_extra[extra_not_in_topk]
+  log_extra_masked[extra_not_in_topk] = \
+                                log_extra[extra_not_in_topk]
 
   log_contribs = torch.cat([
       log_topk, 
@@ -738,9 +740,10 @@ class DUO(DUO_BASE):
   def _prior_loss(self):
     alpha_1 = self._gamma_to_alphat_integral(
       torch.tensor(self.gamma_max))
-    loss = ((alpha_1 + (1 - alpha_1) / self.vocab_size) * torch.log(
-      (self.vocab_size - 1) * alpha_1 + 1) + (
-        1 - 1 / self.vocab_size) * (1 - alpha_1) * torch.log(1 - alpha_1))
+    loss = ((alpha_1 + (1 - alpha_1) / self.vocab_size) \
+           * torch.log((self.vocab_size - 1) * alpha_1 + 1) \
+           + (1 - 1 / self.vocab_size) * (1 - alpha_1) \
+           * torch.log(1 - alpha_1))
     return loss.item()
 
   def _q_xt_gaussian(self, x, gamma_t):
@@ -842,7 +845,7 @@ class Distillation(DUO):
     self._maybe_update_teacher_weights()
 
     sigma = self._process_sigma(sigma)
-    with torch.cuda.amp.autocast(dtype=torch.float32):
+    with torch.amp.autocast('cuda', dtype=torch.float32):
       model_output = self.teacher(xt, sigma)
     logits = self._process_model_output(
       model_output=model_output, xt=xt, sigma=sigma)
