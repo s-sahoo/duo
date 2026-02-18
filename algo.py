@@ -595,7 +595,7 @@ class DUO(DUO_BASE):
       raise ValueError(self.config.algo.curriculum.mode)
 
   def _init_curriculum_cached(self):
-    fpath = self.config.algo.integral_cache_path
+    fpath = self.config.algo.curriculum.integral_cache_path
     with fsspec.open(fpath, 'rb') as f:
       self.integral_cache = pickle.load(f)
     self.integral_cache['pt'] = torch.from_numpy(
