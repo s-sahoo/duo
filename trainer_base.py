@@ -84,7 +84,6 @@ class TrainerBase(L.LightningModule):
 
     self.T = self.config.algo.T
     self.num_tokens = self.config.model.length
-    self.softplus = torch.nn.Softplus()
     self.p_nucleus = self.config.sampling.p_nucleus
     # Noise Schedule
     self.noise = LogLinear()
@@ -114,6 +113,8 @@ class TrainerBase(L.LightningModule):
     if self.config.algo.parameterization == 'ar':
       assert not self.config.algo.time_conditioning
       assert self.config.prior.type == 'none'
+    if self.time_conditioning:
+      assert self.config.sampling.predictor != 'ancestral_cache'
 
     if self.parameterization in {'score', 'mean'}:
       assert self.time_conditioning
@@ -243,10 +244,15 @@ class TrainerBase(L.LightningModule):
   def _process_model_output(self, model_output, xt, sigma):
     raise NotImplementedError
 
-  def forward(self, xt, sigma):
+  def forward(self, xt, sigma, weights=None,
+              nn_input_idxs=None):
+    if nn_input_idxs is None:
+      nn_input_idxs = xt
+
     sigma = self._process_sigma(sigma)
-    with torch.cuda.amp.autocast(dtype=torch.float32):
-      model_output = self.backbone(xt, sigma)
+    with torch.amp.autocast('cuda', dtype=torch.float32):
+      model_output = self.backbone(
+        x=nn_input_idxs, sigma=sigma, weights=weights)
     return self._process_model_output(
       model_output=model_output, xt=xt, sigma=sigma)
 
@@ -446,7 +452,6 @@ class Diffusion(TrainerBase):
     return - torch.gather(input=model_output_t0,
                           dim=-1,
                           index=x0[:, :, None]).squeeze(-1)
-
 
   def nll_per_token(self, model_output, xt, x0, alpha_t,
                     dalpha_t, low_var):

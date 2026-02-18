@@ -76,8 +76,7 @@ trainer:
   val_check_interval: 5000
 
 wandb:
-  project: flow-ode
-  notes: Flow ODEs for UDLM
+  project: duo
   group: null
   job_type: null
   name: null
