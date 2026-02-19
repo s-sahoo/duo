@@ -43,7 +43,7 @@ training:
   change_of_variables: False
   loss_precision: 'bf16'  # bf16, float32, float64
   finetune_path: ''
-  class_dropout_p: 0.1
+  class_dropout_p: 0.1  # only used with class-conditional datasets (eg cifar10)
 
 eval:
   checkpoint_path: ''  # Used to evaluate a checkpoint after training.

@@ -80,9 +80,9 @@ class MDLM(trainer_base.AbsorbingState):
     self._validate_configuration()
 
   def _validate_configuration(self):
-    pass
-    #assert self.sampler == 'ancestral_cache', \
-    #  'sampling.predictor=ancestral is not desirable because it is slow'
+    assert self.sampler == 'ancestral_cache', \
+      'sampling.predictor=ancestral is not desirable because ' \
+      'it is slow. Please set sampling.predictor=ancestral_cache'
 
   def _process_model_output(self, model_output, xt, sigma):
     del sigma
@@ -370,27 +370,6 @@ class DUO_BASE(trainer_base.UniformState):
     diffusion_loss = coeff * (term1 - term2)
     assert diffusion_loss.ndim == 2
     return diffusion_loss
-
-  # def _ancestral_update(self, x, t, labels, dt, p_x0=None,
-  #                       noise_removal_step=False):
-  #   del p_x0
-  #   _, alpha_t = self.noise(t)
-  #   if noise_removal_step:
-  #     alpha_s = torch.ones_like(alpha_t)
-  #   else:
-  #     _, alpha_s = self.noise(t - dt)
-  #   sigma_t = self._sigma_from_alphat(alpha_t)
-  #   assert alpha_t.ndim == 2
-  #   
-  #   q_xs = self._compute_posterior(
-  #     x=self.forward(x, sigma_t).exp(),
-  #     xt=x,
-  #     alpha_s=alpha_s,
-  #     alpha_t=alpha_t)
-  #   if self.p_nucleus < 1:
-  #     q_xs = utils.top_k_top_p_filtering(
-  #       q_xs.log(), top_p=self.p_nucleus)
-  #   return None, trainer_base.sample_categorical(q_xs)
 
 
 class Integral(torch.autograd.Function):
