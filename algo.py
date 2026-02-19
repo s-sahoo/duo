@@ -80,8 +80,9 @@ class MDLM(trainer_base.AbsorbingState):
     self._validate_configuration()
 
   def _validate_configuration(self):
-    # ancestral sampling isn't desirable because it's slow
-    assert self.sampler == 'ancestral_cache'
+    pass
+    #assert self.sampler == 'ancestral_cache', \
+    #  'sampling.predictor=ancestral is not desirable because it is slow'
 
   def _process_model_output(self, model_output, xt, sigma):
     del sigma
@@ -303,7 +304,7 @@ class DUO_BASE(trainer_base.UniformState):
     del xt, sigma
     return model_output.log_softmax(dim=-1)
 
-  def _compute_posterior(self, x, xt, alpha_s, alpha_t):
+  def _posterior_from_x0(self, x0, xt, alpha_s, alpha_t):
     """Computes the posterior / approximate posterior.
 
     Args:
@@ -317,7 +318,7 @@ class DUO_BASE(trainer_base.UniformState):
       Posterior / approximate posterior of shape (B, L, V).
     """
     if self.config.sampling.use_float64:
-      x = x.to(torch.float64)
+      x0 = x0.to(torch.float64)
     if alpha_s.ndim == 2:
       alpha_s = alpha_s.unsqueeze(-1)
     if alpha_t.ndim == 2:
@@ -327,11 +328,11 @@ class DUO_BASE(trainer_base.UniformState):
     xt_one_hot = F.one_hot(xt, self.vocab_size).to(
       self.dtype).to(self.device)
     return (
-      (alpha_t * self.vocab_size * x * xt_one_hot + (
-        alpha_ts - alpha_t) * xt_one_hot + d_alpha * x + (
+      (alpha_t * self.vocab_size * x0 * xt_one_hot + (
+        alpha_ts - alpha_t) * xt_one_hot + d_alpha * x0 + (
           1 - alpha_ts) * (1 - alpha_s) / self.vocab_size) / (
             alpha_t * self.vocab_size * torch.gather(
-              x, -1, xt[..., None]) + (1 - alpha_t)))
+              x0, -1, xt[..., None]) + (1 - alpha_t)))
 
   def nll_per_token(self, log_x_theta, xt, x0, alpha_t,
                     dalpha_t, low_var=False):
@@ -370,26 +371,26 @@ class DUO_BASE(trainer_base.UniformState):
     assert diffusion_loss.ndim == 2
     return diffusion_loss
 
-  def _ancestral_update(self, x, t, dt, p_x0=None,
-                   noise_removal_step=False):
-    del p_x0
-    _, alpha_t = self.noise(t)
-    if noise_removal_step:
-      alpha_s = torch.ones_like(alpha_t)
-    else:
-      _, alpha_s = self.noise(t - dt)
-    sigma_t = self._sigma_from_alphat(alpha_t)
-    assert alpha_t.ndim == 2
-    
-    q_xs = self._compute_posterior(
-      x=self.forward(x, sigma_t).exp(),
-      xt=x,
-      alpha_s=alpha_s,
-      alpha_t=alpha_t)
-    if self.p_nucleus < 1:
-      q_xs = utils.top_k_top_p_filtering(
-        q_xs.log(), top_p=self.p_nucleus)
-    return None, trainer_base.sample_categorical(q_xs)
+  # def _ancestral_update(self, x, t, labels, dt, p_x0=None,
+  #                       noise_removal_step=False):
+  #   del p_x0
+  #   _, alpha_t = self.noise(t)
+  #   if noise_removal_step:
+  #     alpha_s = torch.ones_like(alpha_t)
+  #   else:
+  #     _, alpha_s = self.noise(t - dt)
+  #   sigma_t = self._sigma_from_alphat(alpha_t)
+  #   assert alpha_t.ndim == 2
+  #   
+  #   q_xs = self._compute_posterior(
+  #     x=self.forward(x, sigma_t).exp(),
+  #     xt=x,
+  #     alpha_s=alpha_s,
+  #     alpha_t=alpha_t)
+  #   if self.p_nucleus < 1:
+  #     q_xs = utils.top_k_top_p_filtering(
+  #       q_xs.log(), top_p=self.p_nucleus)
+  #   return None, trainer_base.sample_categorical(q_xs)
 
 
 class Integral(torch.autograd.Function):

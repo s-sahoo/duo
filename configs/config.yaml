@@ -33,6 +33,7 @@ sampling:
   semi_ar: False
   stride_length: 1
   num_strides: 1
+  guid_weight: null  # null -> no classifier-free guidance 
 
 training:
   ema: 0.9999
@@ -42,6 +43,7 @@ training:
   change_of_variables: False
   loss_precision: 'bf16'  # bf16, float32, float64
   finetune_path: ''
+  class_dropout_p: 0.1
 
 eval:
   checkpoint_path: ''  # Used to evaluate a checkpoint after training.
