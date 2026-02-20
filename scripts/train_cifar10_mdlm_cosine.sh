@@ -2,7 +2,7 @@ python -u -m main \
     data=cifar10 \
     data.cache_dir=<YOUR-CACHE-PATH> \
     model=unet \
-    algo=duo_base \
+    algo=mdlm \
     algo.backbone=unet \
     noise=cosine \
     loader.global_batch_size=128 \
@@ -15,6 +15,6 @@ python -u -m main \
     eval.generate_samples=False \
     optim.lr=2e-4 \
     callbacks.checkpoint_every_n_steps.every_n_train_steps=5_000 \
-    wandb.name=duo_base_1_5M_d3pm_like_cosine \
-    hydra.run.dir=./outputs/cifar10/duo_base_1_5M_d3pm_like_cosine \
+    wandb.name=mdlm_1_5M_d3pm_like_cosine \
+    hydra.run.dir=./outputs/cifar10/mdlm_1_5M_d3pm_like_cosine \
 
