@@ -30,7 +30,7 @@ class LogLinear(torch.nn.Module):
   def forward(self, t):
     t = (1 - self.eps) * t
     alpha_t = 1 - t 
-    dalpha_t = - (1 - self.eps)
+    dalpha_t = - torch.ones_like(alpha_t) * (1 - self.eps)
     return dalpha_t, alpha_t
 
   def get_t_for_alpha(self, alpha_t):
@@ -145,7 +145,8 @@ class TrainerBase(L.LightningModule):
     self.fast_forward_batches = None
 
   def _validate_configuration(self):
-    assert self.config.algo.backbone in {'dit', 'hf_dit'}
+    assert self.config.algo.backbone in {'dit', 'hf_dit', 
+                                         'unet'}
     if self.config.algo.parameterization == 'ar':
       assert not self.config.algo.time_conditioning
       assert self.config.prior.type == 'none'
@@ -510,7 +511,9 @@ class Diffusion(TrainerBase):
     
     dalpha_t, alpha_t = self.noise(t)
     alpha_t = alpha_t.unsqueeze(-1)
+    dalpha_t = dalpha_t.unsqueeze(-1)
     assert alpha_t.ndim == 2
+    assert dalpha_t.ndim == 2
     sigma = self._sigma_from_alphat(alpha_t)
 
     xt = self.q_xt(x0, alpha_t)
@@ -520,13 +523,11 @@ class Diffusion(TrainerBase):
       rand = torch.rand(size=labels.shape, dtype=torch.float32, 
                       device=self.device)
       # num_classes represent the absence of class-conditioning
-      class_cond = torch.where(rand < self.class_cond_dropout, 
-                               self.num_classes, labels)
+      labels = torch.where(rand < self.class_cond_dropout, 
+                           self.num_classes, labels)
     else:
       assert labels is None
-      class_cond = None
-    log_x_theta = self.forward(xt, sigma=sigma, 
-                               class_cond=class_cond)
+    log_x_theta = self.forward(xt, sigma=sigma, labels=labels)
     utils.print_nans(log_x_theta, 'model_output')
     return self.nll_per_token(
       log_x_theta=log_x_theta,
@@ -571,8 +572,8 @@ class Diffusion(TrainerBase):
     else:
       # Case gamma not in (0, 1), and class conditional 
       #  -> mix conditional and unconditional predictions.
-      return self._get_guided_posterior_from_xt(self, sigma, 
-        labels, gamma, alpha_s, alpha_t, p_x0)
+      return self._get_guided_posterior_from_xt(self, xt,
+        sigma, labels, gamma, alpha_s, alpha_t, p_x0)
 
   def _get_posterior_from_xt(self, xt, sigma, labels, alpha_s, 
                              alpha_t, p_x0=None):
@@ -602,13 +603,15 @@ class Diffusion(TrainerBase):
     else:
       p_x0_cond, p_x0_uncond = p_x0
     
-    p_x0_cond, log_cond_posterior = self._get_posterior_from_xt(xt, 
-      sigma, labels, alpha_s, alpha_t, p_x0_cond).log()
+    p_x0_cond, cond_posterior = self._get_posterior_from_xt(
+      xt, sigma, labels, alpha_s, alpha_t, p_x0_cond)
+    log_cond_posterior = cond_posterior.log()
     # NOTE: conditioning on self.num_classes represents the
     #  class-unconditional predictions.
-    p_x0_uncond, log_uncond_posterior = self._get_posterior_from_xt(xt, 
-      sigma, torch.full_like(labels, self.num_classes), 
-      alpha_s, alpha_t, p_x0_uncond).log()
+    p_x0_uncond, uncond_posterior = self._get_posterior_from_xt(
+      xt, sigma, torch.full_like(labels, self.num_classes), 
+      alpha_s, alpha_t, p_x0_uncond)
+    log_uncond_posterior = uncond_posterior.log()
 
     un_normalized_posterior = gamma * log_cond_posterior \
                        + (1 - gamma) * log_uncond_posterior

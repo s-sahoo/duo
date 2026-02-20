@@ -18,7 +18,8 @@ import requests
 import tokenizers
 import torch
 import torchvision
-from torchvision import transforms
+from torchvision import transforms as th_transforms
+
 import transformers
 
 import utils
@@ -75,14 +76,14 @@ class DiscreteCIFAR10(torch.utils.data.Dataset):
 
     transforms = []
     if train:
-      transforms += [transforms.RandomHorizontalFlip()]
+      transforms += [th_transforms.RandomHorizontalFlip()]
       
-    transforms += [transforms.Lambda(
+    transforms += [th_transforms.Lambda(
           lambda x: torch.from_numpy(np.array(x))),
-                  transforms.Lambda(
+                  th_transforms.Lambda(
           lambda x: einops.rearrange(x, "h w c -> (c h w)")),]
 
-    self.transform = transforms.Compose(transforms)
+    self.transform = th_transforms.Compose(transforms)
 
   def __len__(self):
     return len(self._dataset)

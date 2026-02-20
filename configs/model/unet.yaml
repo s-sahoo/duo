@@ -1,0 +1,19 @@
+name: unet
+type: unet
+ch: 128 
+num_res_blocks: 2
+num_scales: 4
+ch_mult: [1, 2, 2, 2]
+input_channels: 3
+output_channels: -1 # determined by vocab_size
+scale_count_to_put_attn: 1 # at 16 res
+data_min_max: [0, 255] # No need currently
+dropout: 0.1
+skip_rescale: True
+time_conditioning: True # Whether to add in time embeddings
+time_scale_factor: 1000 
+time_embed_dim: ${.ch}
+fix_logistic: False
+size: ${data.size}
+cond_dim: ${.ch}
+length: ${data.length}

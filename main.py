@@ -70,18 +70,19 @@ def _print_config(
 
 
 @L.pytorch.utilities.rank_zero_only
-def _print_batch(train_ds, valid_ds, tokenizer, k=64):
+def _print_batch(config, train_ds, valid_ds, tokenizer, k=64):
   for dl_type, dl in [
     ('train', train_ds), ('valid', valid_ds)]:
     print(f'Printing {dl_type} dataloader batch.')
     batch = next(iter(dl))
     print('Batch input_ids.shape', batch['input_ids'].shape)
-    first = batch['input_ids'][0, :k]
-    last = batch['input_ids'][0, -k:]
-    print(f'First {k} tokens:', tokenizer.decode(first))
-    print('ids:', first)
-    print(f'Last {k} tokens:', tokenizer.decode(last))
-    print('ids:', last)
+    if config.data.modality == 'text':
+      first = batch['input_ids'][0, :k]
+      last = batch['input_ids'][0, -k:]
+      print(f'First {k} tokens:', tokenizer.decode(first))
+      print('ids:', first)
+      print(f'Last {k} tokens:', tokenizer.decode(last))
+      print('ids:', last)
 
 
 def _generate_samples(diffusion_model, config, logger,
@@ -188,7 +189,7 @@ def _train(diffusion_model, config, logger, tokenizer):
 
   train_ds, valid_ds = dataloader.get_dataloaders(
     config, tokenizer)
-  _print_batch(train_ds, valid_ds, tokenizer)
+  _print_batch(config, train_ds, valid_ds, tokenizer)
 
   if config.training.finetune_path != '':
     assert utils.fsspec_exists(config.training.finetune_path)

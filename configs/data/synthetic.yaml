@@ -1,5 +1,6 @@
 train: synthetic
 valid: synthetic
+modality: text
 tokenizer_name_or_path: synthetic
 cache_dir: /share/kuleshov/ssahoo/textdiffusion/data
 wrap: True
