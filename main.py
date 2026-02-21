@@ -4,10 +4,15 @@ import os
 import fsspec
 import hydra
 import lightning as L
+from lightning.fabric import Fabric
 import omegaconf
 import rich.syntax
 import rich.tree
 import torch
+from torch.utils.data.distributed import DistributedSampler
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.image.inception import InceptionScore
+from tqdm import tqdm
 
 import algo
 import dataloader
@@ -125,14 +130,14 @@ def _generate_samples(diffusion_model, config, logger,
   if not config.sampling.semi_ar:
     generative_ppl = model.metrics.gen_ppl.compute().item()
     entropy = model.metrics.sample_entropy.compute().item()
-    print('Generative perplexity:', generative_ppl)
-    print('Sample entropy:', entropy)
+    logger.info('Generative perplexity:', generative_ppl)
+    logger.info('Sample entropy:', entropy)
   samples_path = config.eval.generated_samples_path
   with fsspec.open(samples_path, 'w') as f:
     json.dump({'generative_ppl': generative_ppl,
                'entropy': entropy,
                'generated_seqs': all_samples}, f, indent=4)
-  print('Samples saved at:', samples_path)
+  logger.info('Samples saved at:', samples_path)
 
 def _eval_ppl(diffusion_model, config, logger, tokenizer):
   logger.info('Starting Perplexity Eval.')
@@ -209,6 +214,85 @@ def _train(diffusion_model, config, logger, tokenizer):
   trainer.fit(model, train_ds, valid_ds, ckpt_path=ckpt_path)
 
 
+def _eval_fid(diffusion_model, config, logger, tokenizer):
+  logger.info('Preparing data and model for FID eval.')
+  fabric = Fabric(accelerator=config.trainer.accelerator,
+                  devices=config.trainer.devices,
+                  num_nodes=config.trainer.num_nodes)
+  
+  fabric.launch()
+  seed = config.seed + fabric.global_rank
+  L.seed_everything(seed)
+  print(f'(Rank {fabric.global_rank}): seed: {seed}')
+  model = _load_from_checkpoint(
+    diffusion_model=diffusion_model,
+    config=config,
+    tokenizer=tokenizer)
+  model.to(fabric.device)
+  if config.eval.disable_ema:
+    logger.info('Disabling EMA.')
+    model.ema = None
+  model._eval_mode()
+
+  assert config.data.train == 'cifar10', \
+                    'FID eval only implemented for CIFAR-10'
+
+  # Like in flow matching papers: FID against train
+  loader, _ = dataloader.get_dataloaders(config, 
+    tokenizer=tokenizer, skip_valid=True)
+
+  sampler = DistributedSampler(
+    loader.dataset,
+    num_replicas=fabric.world_size,
+    rank=fabric.global_rank,
+    shuffle=False)
+  
+  loader = torch.utils.data.DataLoader(
+    loader.dataset,
+    batch_size=config.loader.eval_batch_size,
+    sampler=sampler,
+    num_workers=loader.num_workers if hasattr(loader, 'num_workers') else 0,
+    pin_memory=getattr(loader, 'pin_memory', False))
+  
+  # Check each GPU must generate the same number of images
+  assert len(loader) == len(loader.dataset) // loader.batch_size // fabric.world_size, \
+     f'{len(loader)=}, {len(loader.dataset)=}, {loader.batch_size=}, {fabric.world_size=}'
+
+  fid_calculator = FrechetInceptionDistance(
+    normalize=False).to(fabric.device)
+  is_calculator = InceptionScore(
+    normalize=False).to(fabric.device)
+  
+  desc = f'(Rank {fabric.global_rank}) Sampling...'
+  for batch in tqdm(loader, desc=desc):
+    real_samples = batch['input_ids']
+    # Generate images with labels matching the true data
+    labels = batch['labels']
+
+    gen_samples = model.generate_samples(
+      num_samples=real_samples.shape[0], 
+      num_steps=config.sampling.steps,
+      labels=labels)
+    # Reshape 1D seq -> 2D image
+    gen_samples = model.tokenizer.batch_decode(gen_samples)
+    real_samples = model.tokenizer.batch_decode(
+      real_samples).to(fabric.device)
+
+    fid_calculator.update(gen_samples, real=False)
+    fid_calculator.update(real_samples, real=True)
+    is_calculator.update(gen_samples)
+  
+  fabric.barrier()
+  logger.info('Done sampling. Computing FID & IS...')
+  fid = fid_calculator.compute()
+  incep_score = is_calculator.compute()
+
+  if fabric.global_rank == 0:
+    logger.info(f'FID: {fid}')
+    logger.info(f'IS: {incep_score}')
+  fabric.barrier()
+
+
 @hydra.main(version_base=None, config_path='configs',
             config_name='config')
 def main(config):
@@ -245,6 +329,8 @@ def main(config):
     _generate_samples(**kwargs)
   elif config.mode == 'ppl_eval':
     _eval_ppl(**kwargs)
+  elif config.mode == 'fid_eval':
+    _eval_fid(**kwargs)
   else:
     _train(**kwargs)
 
