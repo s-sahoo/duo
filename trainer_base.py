@@ -552,7 +552,12 @@ class Diffusion(TrainerBase):
     the mathematical expression for q(z_s | z_t, x)"""
     raise NotImplementedError
 
-  def _get_sampling_posterior(self, xt, sigma, labels, 
+  def _forward_process(self, q_x0, alpha_s):
+    """Apply forward noising: q(x_s | x_0), where x_0 is a 
+       K-dimensional vector"""
+    raise NotImplementedError
+
+  def _get_ancestral_posterior(self, xt, sigma, labels, 
                               alpha_s, alpha_t, p_x0):
     """Top-level call from generate_samples. Compute the 
        standard posterior sampling distribution from the 
@@ -637,10 +642,102 @@ class Diffusion(TrainerBase):
     sigma = self._sigma_from_alphat(alpha_t)
     assert alpha_t.ndim == 2, f'{alpha_t.ndim=}'
 
-    p_x0, q_xs = self._get_sampling_posterior(x, sigma, 
+    p_x0, q_xs = self._get_ancestral_posterior(x, sigma, 
       labels, alpha_s, alpha_t, p_x0)
 
     return p_x0, sample_categorical(q_xs)
+
+  def _psi_update(self, x, t, labels, dt, kappa, p_x0=None,
+                  noise_removal_step=False):
+    _, alpha_t = self.noise(t)
+    if noise_removal_step:
+      alpha_s = torch.ones_like(alpha_t)
+    else:
+      _, alpha_s = self.noise(t - dt)
+    alpha_0 = torch.ones_like(alpha_t)
+    sigma = self._sigma_from_alphat(alpha_t)
+
+    # Standard posterior q(x_s | x_t)
+    p_x0, q_xs = self._get_ancestral_posterior(
+      x, sigma, labels, alpha_s, alpha_t, p_x0)
+
+    # Posterior targeting t=0, reuse predictions p_x0
+    _, q_x0 = self._get_ancestral_posterior(
+      x, sigma, labels, alpha_0, alpha_t, p_x0)
+
+    # PC: forward-noise q_x0 back to time s
+    pc_q_xs = self._forward_process(q_x0, alpha_s)
+
+    q_sample = kappa * q_xs + (1 - kappa) * pc_q_xs
+    return p_x0, sample_categorical(q_sample)
+
+  def _get_sampling_time_profile(self, eps, num_steps):
+    profile = self.config.sampling.psi.time_profile
+    num_steps += 1
+    if profile == 'linear' \
+      or self.config.sampling.predictor != 'psi':
+      # Default: linearly decrease
+      return torch.linspace(1, eps, num_steps)
+    if not profile.startswith('linear-constant-linear'):
+      raise ValueError(profile)
+    c = float(profile.split('-')[3])
+    if 'inv' in profile:
+      c = self.noise.get_t_for_alpha(c)
+    psi_cfg = self.config.sampling.psi
+    n_hi = round(psi_cfg.high_frac * num_steps)
+    n_mid = round(psi_cfg.middle_frac * num_steps)
+    return torch.cat([
+      torch.linspace(1, c, n_hi),
+      torch.full((n_mid,), c),
+      torch.linspace(c, eps, num_steps - n_hi - n_mid)])
+
+  def _mode_to_psi_kappas(self, mode, timesteps):
+    n = len(timesteps)
+    if mode == 'pure-posterior':
+      return torch.ones(n)
+    if mode == 'pure-pc':
+      return torch.zeros(n)
+
+    eta = float(mode.split('-')[-1])
+    if (mode.startswith('constant-')
+        and not mode.startswith('constant-remdm')):
+      return torch.full((n,), eta)
+
+    # Noise-schedule-dependent modes (ReMDM-like)
+    _, all_alphas = self.noise(timesteps)
+    alpha_t, alpha_s = all_alphas[:-1], all_alphas[1:]
+    eta_t = torch.tensor([eta])
+    if mode.startswith('max-capped-'):
+      sigma = torch.minimum(
+        eta_t.expand_as(alpha_t), (1 - alpha_s) / alpha_t)
+      sigma = torch.where(alpha_t == 0, eta, sigma)
+    elif mode.startswith('max-rescale-'):
+      sigma_max = torch.minimum(
+        eta_t.expand_as(alpha_t), (1 - alpha_s) / alpha_t)
+      sigma = torch.where(alpha_t > 0, sigma_max, 1) * eta
+    elif mode.startswith('constant-remdm'):
+      sigma = eta_t
+    else:
+      raise ValueError(mode)
+    kappas = torch.clip(1 - sigma / (1 - alpha_s), 0, 1)
+    if len(kappas) > 0:
+      kappas = torch.cat([kappas, torch.ones(1)])
+    return kappas
+
+  def _get_kappas(self, timesteps):
+    cfg = self.config.sampling.psi
+    n = len(timesteps)
+    n_hi = round(cfg.high_frac * n)
+    n_mid = round(cfg.middle_frac * n)
+    kappas = torch.cat([
+      self._mode_to_psi_kappas(cfg.high_mode, timesteps[:n_hi]),
+      self._mode_to_psi_kappas(cfg.middle_mode,
+        timesteps[n_hi:n_hi + n_mid]),
+      self._mode_to_psi_kappas(cfg.low_mode,
+        timesteps[n_hi + n_mid:])])
+    assert (kappas >= 0).all() and (kappas <= 1).all()
+    assert len(kappas) == n
+    return kappas
 
   @torch.no_grad()
   def generate_samples(self, num_samples, labels=None,
@@ -650,17 +747,20 @@ class Diffusion(TrainerBase):
     if num_steps is None:
       num_steps = self.config.sampling.steps
     x = self.prior_sample(num_samples, self.num_tokens)
-    timesteps = torch.linspace(
-      1, eps, num_steps + 1, device=self.device)
-    dt = (1 - eps) / num_steps
-    p_x0_cache = None
+    use_psi_sampler = self.config.sampling.predictor == 'psi'
+    timesteps = self._get_sampling_time_profile(eps, 
+                                                num_steps)
+    if use_psi_sampler:
+      kappas = self._get_kappas(timesteps).to(self.device)
 
+    p_x0_cache = None
     if labels is not None:
       labels = labels.to(self.device)
 
     for i in range(num_steps):
       t = timesteps[i] * torch.ones(
         x.shape[0], 1, device=self.device)
+      dt = timesteps[i] - timesteps[i+1]
       if self.sampler == 'ancestral':
         _, x = self._ancestral_update(
           x=x, t=t, labels=labels, dt=dt, p_x0=None)
@@ -672,6 +772,10 @@ class Diffusion(TrainerBase):
           # Disable caching
           p_x0_cache = None
         x = x_next
+      elif self.sampler == 'psi':
+        _, x = self._psi_update(x=x, t=t, kappa=kappas[i],
+                                labels=labels, dt=dt, 
+                                p_x0=None)
       elif self.sampler == 'analytic':
         assert labels is None, 'class-conditional sampling ' \
           'is not implemented with the analytic sampler'
@@ -812,6 +916,11 @@ class AbsorbingState(Diffusion):
     q_xs[orig_mask] = orig_output_on_clean
     return q_xs
 
+  def _forward_process(self, x0, alpha_s):
+    out = alpha_s[..., None] * x0
+    out[..., self.mask_index] = 1 - alpha_s
+    return out
+
   def _staggered_score(self, score, dsigma):
     score = score.clone()
     extra_const = (1 - dsigma.exp()) * score.sum(dim=-1)
@@ -858,6 +967,10 @@ class UniformState(Diffusion):
     assert self.parameterization == 'mean'
     if self.config.algo.name != 'distillation':
       assert self.T == 0
+
+  def _forward_process(self, x0, alpha_s):
+    return (alpha_s[..., None] * x0
+            + (1 - alpha_s[..., None]) / self.vocab_size)
 
   def q_xt(self, x, alpha_t):
     """Computes the noisy sample xt.
