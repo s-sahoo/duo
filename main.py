@@ -12,7 +12,7 @@ import torch
 from torch.utils.data.distributed import DistributedSampler
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.image.inception import InceptionScore
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 import algo
 import dataloader
@@ -105,7 +105,7 @@ def _generate_samples(diffusion_model, config, logger,
   stride_length = config.sampling.stride_length
   num_strides = config.sampling.num_strides
   all_samples = []
-  for _ in range(config.sampling.num_sample_batches):
+  for _ in trange(config.sampling.num_sample_batches):
     if config.sampling.semi_ar:
       _, intermediate_samples, _ = model.restore_model_and_semi_ar_sample(
         stride_length=stride_length,
@@ -130,14 +130,14 @@ def _generate_samples(diffusion_model, config, logger,
   if not config.sampling.semi_ar:
     generative_ppl = model.metrics.gen_ppl.compute().item()
     entropy = model.metrics.sample_entropy.compute().item()
-    logger.info('Generative perplexity:', generative_ppl)
-    logger.info('Sample entropy:', entropy)
+    logger.info(f'Generative perplexity: {generative_ppl}')
+    logger.info(f'Sample entropy: {entropy}')
   samples_path = config.eval.generated_samples_path
   with fsspec.open(samples_path, 'w') as f:
     json.dump({'generative_ppl': generative_ppl,
                'entropy': entropy,
                'generated_seqs': all_samples}, f, indent=4)
-  logger.info('Samples saved at:', samples_path)
+  logger.info(f'Samples saved at: {samples_path}',)
 
 def _eval_ppl(diffusion_model, config, logger, tokenizer):
   logger.info('Starting Perplexity Eval.')
