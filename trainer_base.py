@@ -567,10 +567,11 @@ class Diffusion(TrainerBase):
                                          alpha_s, alpha_t, p_x0)
     elif gamma == 1.0:  
       # Simply sample from the cond. posterior only.
+      assert labels is not None
       return self._get_posterior_from_xt(xt, sigma, labels, 
                                          alpha_s, alpha_t, p_x0)
     else:
-      # Case gamma not in (0, 1), and class conditional 
+      # Case gamma not in {0, 1}, and class conditional 
       #  -> mix conditional and unconditional predictions.
       return self._get_guided_posterior_from_xt(self, xt,
         sigma, labels, gamma, alpha_s, alpha_t, p_x0)
@@ -672,6 +673,8 @@ class Diffusion(TrainerBase):
           p_x0_cache = None
         x = x_next
       elif self.sampler == 'analytic':
+        assert labels is None, 'class-conditional sampling ' \
+          'is not implemented with the analytic sampler'
         x = self._analytic_update(x=x,t=t, dt=dt)
       else:
         raise ValueError(self.sampler)
@@ -798,7 +801,7 @@ class AbsorbingState(Diffusion):
   def _posterior_from_x0(self, x0, xt, alpha_s, alpha_t):
     """From the clean x0, or denoiser predictions, implement 
     the mathematical expression for q(z_s | z_t, x)"""
-    assert x0.dtype == torch.float64, 'Untested in lower precision'
+    assert x0.dtype == torch.float64, 'Requires float64 prec.'
     # should be one-hot on clean tokens
     orig_mask = xt[:, :, None] != self.mask_index
     orig_mask = orig_mask.expand(-1, -1, x0.shape[-1])
