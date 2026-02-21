@@ -11,16 +11,90 @@ import zipfile
 from typing import Optional
 
 import datasets
+import einops
 import fsspec
 import numpy as np
 import requests
 import tokenizers
 import torch
+import torchvision
+from torchvision import transforms as th_transforms
+
 import transformers
 
 import utils
 
 LOGGER = utils.get_logger(__name__)
+
+
+
+class RawPixelsVisionTokenizer:
+  def __init__(self, vocab_size, image_size,
+               add_mask_token=True, add_special_tokens=True):
+    self.pad_token_id = None
+    self.pad_token = None
+    if add_mask_token:
+      self.mask_token = vocab_size
+      self.mask_token_id = vocab_size
+      self.vocab_size = vocab_size + 1  # mask token
+    else:
+      self.vocab_size = vocab_size
+    if add_special_tokens:
+      self.bos_token_id = vocab_size
+      self.bos_token = vocab_size
+      self.eos_token_id = vocab_size + 1
+      self.eos_token = vocab_size + 1
+      # mask token, bos_token, eos_token
+      self.vocab_size = self.vocab_size + 2  
+    else:
+      self.vocab_size = self.vocab_size
+    self.image_size = image_size
+
+  def __call__(self, x):
+    return x
+
+  def batch_decode(self, x):
+    x = einops.rearrange(x, 'b (c h w) -> b c h w', c=3,
+                         h=self.image_size)
+    x = x.to(dtype=torch.uint8)
+    return x
+
+  def decode(self, x):
+    x = einops.rearrange(x, '(c h w) -> h w c', c=3,
+                         h=self.image_size)
+    x = x.to(dtype=torch.uint8)
+    return x
+  
+  def __len__(self):
+    return self.vocab_size
+  
+
+class DiscreteCIFAR10(torch.utils.data.Dataset):
+  def __init__(self, cache_dir, train):
+    self._dataset = torchvision.datasets.CIFAR10(
+      root=cache_dir, train=train, download=True)
+
+    transforms = []
+    if train:
+      transforms += [th_transforms.RandomHorizontalFlip()]
+      
+    transforms += [th_transforms.Lambda(
+          lambda x: torch.from_numpy(np.array(x))),
+                  th_transforms.Lambda(
+          lambda x: einops.rearrange(x, "h w c -> (c h w)")),]
+
+    self.transform = th_transforms.Compose(transforms)
+
+  def __len__(self):
+    return len(self._dataset)
+
+  def __getitem__(self, index):
+    img, labels = self._dataset[index]
+
+    img = self.transform(img)
+    attention_mask = torch.ones_like(img)
+    return {'input_ids': img.to(torch.long), 'labels': labels,
+            'attention_mask': attention_mask}
 
 
 def wt_detokenizer(string):
@@ -421,6 +495,10 @@ def get_dataset(dataset_name,
                 num_proc=len(os.sched_getaffinity(0)),
                 streaming=False,
                 revision : Optional[str]=None):
+  if dataset_name == 'cifar10':
+    assert mode in ('train', 'validation')
+    return DiscreteCIFAR10(cache_dir=cache_dir, 
+                           train=mode=='train')
   eos_tag = ''
   if not insert_eos:
     eos_tag = '_eosFalse'
@@ -639,6 +717,10 @@ def get_tokenizer(config):
       from_pretrained('bert-base-uncased')
   elif config.data.tokenizer_name_or_path == 'synthetic':
     tokenizer = SyntheticTokenizer(vocab_size=256)
+  elif config.data.tokenizer_name_or_path == 'cifar10':
+    return RawPixelsVisionTokenizer(
+      vocab_size=256, image_size=32, add_special_tokens=False, 
+      add_mask_token='mdlm' in config.algo.name)
   else:
     tokenizer = transformers.AutoTokenizer.from_pretrained(
       config.data.tokenizer_name_or_path)

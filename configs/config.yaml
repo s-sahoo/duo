@@ -33,6 +33,7 @@ sampling:
   semi_ar: False
   stride_length: 1
   num_strides: 1
+  guid_weight: null  # null -> no classifier-free guidance 
 
 training:
   ema: 0.9999
@@ -42,6 +43,7 @@ training:
   change_of_variables: False
   loss_precision: 'bf16'  # bf16, float32, float64
   finetune_path: ''
+  class_dropout_p: 0.1  # only used with class-conditional datasets (eg cifar10)
 
 eval:
   checkpoint_path: ''  # Used to evaluate a checkpoint after training.
@@ -74,6 +76,7 @@ trainer:
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
   limit_val_batches: 1.0     # validate on full dataset, can be used to toggle quick run
   val_check_interval: 5000
+  check_val_every_n_epoch: null  # Disable end-of-epoch validation. Instead, validate every trainer.val_check_interval steps.
 
 wandb:
   project: duo

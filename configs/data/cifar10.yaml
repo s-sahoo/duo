@@ -1,0 +1,13 @@
+train: cifar10
+valid: cifar10
+modality: image
+tokenizer_name_or_path: cifar10
+cache_dir: /share/kuleshov/ssahoo/textdiffusion/data
+num_classes: 10  # 10 / null
+streaming: False
+size: 1024
+length: 3072
+wrap: False
+insert_train_eos: False
+insert_valid_eos: False
+insert_train_spacial: False
