@@ -30,7 +30,7 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 **Uniform-state beats Masked diffusion on text and image generation!**
 
 <div align="center">
-  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure-subham.png" width="60%">
+  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure-subham.png" width="90%">
 </div>
 
 In this repo, we release:
