@@ -2,6 +2,7 @@ import os
 import collections
 import copy
 import pickle
+from typing import Optional
 
 import fsspec
 import numpy as np
@@ -423,21 +424,84 @@ class Integral(torch.autograd.Function):
 class DUO(DUO_BASE):
   def __init__(self, config, tokenizer):
     super().__init__(config, tokenizer)
-    with fsspec.open(self.config.algo.integral_cache_path,
-                     'rb') as f:
+    self.gamma_min = self.config.algo.curriculum.gamma_min
+    self.gamma_max = self.config.algo.curriculum.gamma_max
+    self.gumbel_tau_log10_start = \
+          self.config.algo.curriculum.gumbel_tau_log10_start
+    self.gumbel_tau_log10_end = \
+            self.config.algo.curriculum.gumbel_tau_log10_end
+    self.curriculum_start = self.config.algo.curriculum.start
+    self.curriculum_end = self.config.algo.curriculum.end
+    self.loss_type = self.config.algo.loss_type
+    self._initialize_curriculum_coefficients()
+    self._validate_configuration()
+    
+  def _initialize_curriculum_coefficients(self):
+    if self.config.algo.curriculum.mode in {'simple', 
+      'efficient_cached'}:
+      self._init_curriculum_cached()
+    elif self.config.algo.curriculum.mode == 'series':
+      self._init_curriculum_series()
+    elif self.config.algo.curriculum.mode in {'sigmoid',
+      'sigmoid-edge-corrected', 'poly3', 'poly5', 'poly7',
+      'poly9'}:
+      self._init_curriculum_approx()
+    else:
+      raise ValueError(self.config.algo.curriculum.mode)
+
+  def _init_curriculum_cached(self):
+    fpath = self.config.algo.curriculum.integral_cache_path
+    with fsspec.open(fpath, 'rb') as f:
       self.integral_cache = pickle.load(f)
     self.integral_cache['pt'] = torch.from_numpy(
       self.integral_cache['pt'])
     self.integral_cache['grad_pt'] = torch.from_numpy(
       self.integral_cache['grad_pt'])
-    self.gamma_min = self.config.algo.gamma_min
-    self.gamma_max = self.config.algo.gamma_max
-    self.gumbel_tau_log10_start = self.config.algo.gumbel_tau_log10_start
-    self.gumbel_tau_log10_end = self.config.algo.gumbel_tau_log10_end
-    self.curriculum_start = self.config.algo.curriculum_start
-    self.curriculum_end = self.config.algo.curriculum_end
-    self.loss_type = self.config.algo.loss_type
-    self._validate_configuration()
+
+  def _init_curriculum_series(self):
+    m, i = utils.compute_duo_series_coefficients(
+      self.config.algo.curriculum.n_series_terms, 
+      self.vocab_size)
+
+    self.register_buffer('coefficients_m', m, 
+                         persistent=False)
+    self.register_buffer('coefficients_i', i,
+                         persistent=False)
+    self.register_buffer('power_arange',
+      torch.arange(self.config.algo.curriculum.n_series_terms,
+        dtype=torch.float64)[None], persistent=False)
+
+  def _init_curriculum_approx(self):
+    fname = f'{self.config.algo.curriculum.mode}.npy'
+    fpath = os.path.join(self.config.algo.curriculum.cache_dir, 
+                         fname)
+    if not os.path.exists(fpath):
+      # Compute the coefficients on the fly
+      coefficients, _, _, _ = utils.compute_duo_operator_approx(
+        num_coefficients=self.config.algo.curriculum.n_series_terms,
+        vocab_size=self.vocab_size,
+        gamma_min=self.gamma_min,
+        gamma_max=self.gamma_max,
+        fct_name=self.config.algo.curriculum.mode)
+      # Tuples are for torch compile, tuples are immutable
+      coefficients = tuple(coefficients)
+      parent_dir = os.path.dirname(fpath)
+      os.makedirs(parent_dir, exist_ok=True)
+      np.save(fpath, coefficients)
+    else:
+      coefficients = tuple(np.load(fpath).tolist())
+    mode = self.config.algo.curriculum.mode
+    if mode == 'sigmoid':
+      fn = utils.duo_to_alpha_dalpha_sigmoid
+    elif mode == 'sigmoid-edge-corrected':
+      fn = utils.duo_t_to_alpha_dalpha_sigm_corrected
+    elif mode in ('poly3', 'poly5', 'poly7', 'poly9'):
+      fn = utils.duo_to_alpha_dalpha_poly
+    else:
+      raise ValueError(mode)
+    fn = torch.compile(fn)
+    self._t_to_alpha_dalpha_compiled = \
+      lambda t: fn(t, *coefficients)
 
   def to(self, *args, **kwargs):
     self = super().to(*args, **kwargs)
@@ -445,6 +509,33 @@ class DUO(DUO_BASE):
       'pt'].to(*args, **kwargs)
     self.integral_cache['grad_pt'] = self.integral_cache[
       'grad_pt'].to(*args, **kwargs)
+    return self
+
+  def cuda(self, device=None):
+    self = super().cuda(device=device)
+    if hasattr(self, 'integral_cache'):
+      self.integral_cache['pt'] = self.integral_cache[
+        'pt'].cuda(device=device)
+      self.integral_cache['grad_pt'] = self.integral_cache[
+        'grad_pt'].cuda(device=device)
+    return self
+
+  def cpu(self):
+    self = super().cpu()
+    if hasattr(self, 'integral_cache'):
+      self.integral_cache['pt'] = self.integral_cache[
+        'pt'].cpu()
+      self.integral_cache['grad_pt'] = self.integral_cache[
+        'grad_pt'].cpu()
+    return self
+
+  def to(self, *args, **kwargs):
+    self = super().to(*args, **kwargs)
+    if hasattr(self, 'integral_cache'):
+      self.integral_cache['pt'] = self.integral_cache[
+        'pt'].to(*args, **kwargs)
+      self.integral_cache['grad_pt'] = self.integral_cache[
+        'grad_pt'].to(*args, **kwargs)
     return self
 
   def _compute_gumbel_tau_inverse(self):
@@ -469,17 +560,43 @@ class DUO(DUO_BASE):
              sync_dist=True)
     return super().training_step(batch, batch_idx)
 
-  def _gamma_to_alphat(self, gamma_t):
+  def _gamma_to_alpha_dalpha(self, gamma_t, t):
+    if self.config.algo.curriculum.mode in ('simple', 
+      'efficient_cached'):
+      return self._gamma_to_alpha_dalpha_cached(gamma_t)
+    elif self.config.algo.curriculum.mode == 'series':
+      return utils.compute_duo_gamma_to_alpha_dalpha_series(
+        gamma_t, self.coefficients_m, self.coefficients_i,
+        self.power_arange, self.vocab_size, self.gamma_min,
+        self.gamma_max)
+    elif self.config.algo.curriculum.mode in ('sigmoid',
+      'sigmoid-edge-corrected', 'poly3', 'poly5', 'poly7',
+      'poly9'):
+      return self._t_to_alpha_dalpha_compiled(t)
+    else:
+      raise ValueError(self.config.algo.curriculum.mode)
+
+  def _gamma_to_alphat_integral(self, gamma_t):
     integral = Integral.apply(gamma_t, self.integral_cache)
     return (self.vocab_size * integral - 1) / (
       self.vocab_size - 1)
 
+  def _gamma_to_alpha_dalpha_cached(self, gamma_t):
+    gamma_t_prime = self.gamma_max - self.gamma_min
+    usdm_alpha_t = DUO._gamma_to_alphat_integral(self, gamma_t)
+    T = 1000
+    usdm_dalpha_t = gamma_t_prime * T * (
+      DUO._gamma_to_alphat_integral(self, gamma_t + 1 / T) 
+      - usdm_alpha_t)
+    return usdm_alpha_t, usdm_dalpha_t
+
   def _prior_loss(self):
-    alpha_1 = self._gamma_to_alphat(
+    alpha_1 = self._gamma_to_alphat_integral(
       torch.tensor(self.gamma_max))
-    loss = ((alpha_1 + (1 - alpha_1) / self.vocab_size) * torch.log(
-      (self.vocab_size - 1) * alpha_1 + 1) + (
-        1 - 1 / self.vocab_size) * (1 - alpha_1) * torch.log(1 - alpha_1))
+    loss = ((alpha_1 + (1 - alpha_1) / self.vocab_size) \
+           * torch.log((self.vocab_size - 1) * alpha_1 + 1) \
+           + (1 - 1 / self.vocab_size) * (1 - alpha_1) \
+           * torch.log(1 - alpha_1))
     return loss.item()
 
   def _q_xt_gaussian(self, x, gamma_t):
@@ -503,22 +620,33 @@ class DUO(DUO_BASE):
     del output_tokens
     t = self._sample_t(x0.shape[0], current_accumulation_step)
     gamma_t = self.gamma_min + t * (self.gamma_max
-                                    - self.gamma_min)    
-    gamma_t_prime = self.gamma_max - self.gamma_min
-    usdm_alpha_t = self._gamma_to_alphat(gamma_t)
-    T = 1000
-    usdm_dalpha_t = gamma_t_prime * T * (
-      self._gamma_to_alphat(gamma_t + 1 / T) - usdm_alpha_t)
-    usdm_alpha_t = usdm_alpha_t.unsqueeze(-1)
-    usdm_dalpha_t = usdm_dalpha_t.unsqueeze(-1)
-    assert usdm_alpha_t.ndim == 2
-    sigma = self._sigma_from_alphat(usdm_alpha_t)
+                                    - self.gamma_min)
+    usdm_alpha_t, usdm_dalpha_t = \
+      self._gamma_to_alpha_dalpha(gamma_t, t)
 
-    x0_one_hot = F.one_hot(x0, self.vocab_size)
-    xt = self._q_xt_gaussian(x0_one_hot, gamma_t)
-    xt = xt * self._compute_gumbel_tau_inverse()
-    xt_usdm = xt.argmax(-1)
-    log_x_theta = self.forward(xt, sigma=sigma)
+    usdm_alpha_t = usdm_alpha_t.unsqueeze(-1)
+    assert usdm_alpha_t.ndim == 2
+    usdm_dalpha_t = usdm_dalpha_t.unsqueeze(-1)
+    sigma = self._sigma_from_alphat(usdm_alpha_t)
+    # Default Duo curriculum
+    if self.config.algo.curriculum.mode == 'simple':
+      x0_one_hot = F.one_hot(x0, self.vocab_size)
+      xt = self._q_xt_gaussian(x0_one_hot, gamma_t)
+      xt = xt * self._compute_gumbel_tau_inverse()
+      xt_usdm = xt.argmax(-1)
+      log_x_theta = self.forward(xt, sigma=sigma)
+    else:  # Efficient variant
+      softmax_approx, topk_indices, xt_usdm = \
+        utils.sample_tempered_softmax_topk(
+        extra_index=x0,
+        alpha=torch.sigmoid(-gamma_t).sqrt(),
+        sigma=torch.sigmoid(gamma_t).sqrt(),
+        l=x0.shape[1],
+        k=self.config.algo.curriculum.top_k,
+        vocab_size=self.vocab_size,
+        inverse_temperature=self._compute_gumbel_tau_inverse())
+      log_x_theta = self.forward(topk_indices, sigma=sigma, 
+                                 weights=softmax_approx)
 
     return self.nll_per_token(log_x_theta=log_x_theta,
                               xt=xt_usdm,
@@ -570,7 +698,7 @@ class Distillation(DUO):
     self._maybe_update_teacher_weights()
 
     sigma = self._process_sigma(sigma)
-    with torch.cuda.amp.autocast(dtype=torch.float32):
+    with torch.amp.autocast('cuda', dtype=torch.float32):
       model_output = self.teacher(xt, sigma)
     logits = self._process_model_output(
       model_output=model_output, xt=xt, sigma=sigma)

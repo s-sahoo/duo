@@ -5,12 +5,23 @@ time_conditioning: True
 T: 0  # 0 (continuous time) / 1000 
 subs_masking: False
 causal_attention: False
-gumbel_tau_log10_start: -1.0
-gumbel_tau_log10_end: -2.0
-curriculum_start: 100_000
-curriculum_end: 200_000
-integral_cache_path: ${hydra:runtime.cwd}/integral/${data.tokenizer_name_or_path}.pkl
 loss_type: elbo
 ignore_bos: False
-gamma_min: -3.5
-gamma_max: -1.75
+
+# Curriculum arguments
+curriculum:
+  # Simple is the original duo curriculum, poly9 is the one we use in duo2 for speed
+  mode: simple  # simple / efficient_cached / series / sigmoid / sigmoid-edge-corrected / poly3 / poly5 / poly7 / poly9
+  # Arguments for the simple & efficient variant
+  gumbel_tau_log10_start: -1.0
+  gumbel_tau_log10_end: -2.0
+  start: 100_000
+  end: 200_000
+  gamma_min: -3.5
+  gamma_max: -1.75
+  # Argument for the simple and efficient_cached variants
+  integral_cache_path: ${hydra:runtime.cwd}/integral/${data.tokenizer_name_or_path}.pkl
+  # Arguments for the efficient variant only
+  top_k: -1
+  cache_dir: './transform_approx_coefficients'
+  n_series_terms: 150
