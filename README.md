@@ -1,6 +1,11 @@
-# [The Diffusion Duality (ICML 2025)](https://arxiv.org/abs/2506.10892)
+# The Diffusion Duality
+
+### [Chapter I (ICML 2025)](https://arxiv.org/abs/2506.10892)
+
 By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https://jdeschena.com), [Aaron Gokaslan](https://skylion007.github.io),
 [Guanghan Wang](https://tech.cornell.edu/people/guanghan-wang/), [Justin Chiu](https://justinchiu.netlify.app), [Volodymyr Kuleshov](https://www.cs.cornell.edu/~kuleshov/)
+
+TODO: point them to the ch1 branch for code.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Sf7R-dqdR6gq-H8nyZ9E3ZkyvqMTqcwq?usp=sharing)
 [![YouTube](https://img.shields.io/badge/YouTube-%23FF0000.svg?logo=YouTube&logoColor=white)](https://youtu.be/FCO-nnqHOqQ?si=4eGnj5zbRgyCYWwI)
@@ -14,11 +19,22 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
   <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
 </div>
 
+### [Chapter II: $\Psi$-Samplers and Efficient Curriculum (ICLR 2026)](https://openreview.net/forum?id=RSIoYWIzaP)
+By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.caglar.ai),
+[Subham Sekhar Sahoo](https://s-sahoo.github.io)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1uFSzrfG0KXhGcohRIfWIM2Y7V9Q7cQNA?usp=sharing)
+[![deploy](https://img.shields.io/badge/Blog%20%20-8A2BE2)](http://s-sahoo.github.io/duo-ch2)
+[![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=RSIoYWIzaP)
+<!-- [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875) -->
+**Uniform-state beats Masked diffusion on text and image generation!**
+
 In this repo, we release:
-* **The DUO framework**
-  1. Curriculum learning strategy to speed up training. [[Example]](#training)
-  2. Discrete Consistency Distillation pipeline. [[Example]](#distillation)
-  3. Greedy-tail sampler. [[Example]](#sampling)
+* **The Duo / $\text{Duo}^\text{++}$ framework**
+  1. $\Psi$-sampler. [Example TODO](#psi-sampler) 
+  2. Curriculum learning strategy to speed up training. [[Example]](#training)
+  3. Discrete Consistency Distillation pipeline. [[Example]](#distillation)
+  4. Greedy-tail sampler. [[Example]](#sampling)
 * **Baseline implementations** [[Examples]](#baselines):
   1. Autoregressive Model.
   2. [MDLM](https://arxiv.org/abs/2406.07524): Sahoo et al., "Simple and Effective Masked Diffusion Language Model", NeurIPS 2024.
@@ -51,9 +67,6 @@ pip install -r requirements.txt
 pip install flash_attn==2.7.4.post1
 ```
 
-### :izakaya_lantern: Integral Cache [Important]
-Curriculum Learning (`Sec. 4.1`) and Discrete Consistency Distillation (`Sec. 4.2`) require mapping Gaussian to discrete diffusion parameters via the Diffusion Transformation operator (`Sec. 3`), which involves computing an integral (dependent only on the tokenizer’s vocabulary size). To avoid slowing down training, we pre-compute and cache this integral. Cached operators for `bert-base-uncased` (LM1B) and `gpt2` (OWT) are in [`integral/`](integral). For other tokenizers, run: 
-```
 python utils.py --vocab_size=N
 ```
 where `N` is the vocabulary size of the tokenizer.
@@ -74,7 +87,7 @@ sbatch scripts/ABC_XYZ.sh
 # Training
 <a name="training"></a>
 
-To train DUO use the following scripts:
+To train $\text{Duo}^\text{++}$ use the following scripts:
 * LM1B
   * w/ sentencepacking (same as in D3PM)
     * Training script: [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh)
