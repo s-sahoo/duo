@@ -1,5 +1,19 @@
 # The Diffusion Duality Series
 
+This repository contains the code for the two papers in the Diffusion Duality series.
+
+## Table of Contents
+- [Chapter I (ICML 2025)](#chapter-i-icml-2025)
+- [Chapter II (ICLR 2026)](#chapter-ii-psi-samplers-and-efficient-curriculum-iclr-2026)
+- [What's Included](#whats-included)
+- [Getting Started](#getting-started)
+- [Checkpoints](#checkpoints)
+- [Training](#training)
+- [Distillation](#distillation)
+- [Sampling & Eval](#sampling--eval)
+- [Baselines](#baselines)
+- [Acknowledgements & Citation](#acknowledgements--citation)
+
 ## [Chapter I (ICML 2025)](https://arxiv.org/abs/2506.10892)
 
 By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https://jdeschena.com), [Aaron Gokaslan](https://skylion007.github.io),
@@ -12,13 +26,13 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://arxiv.org/abs/2506.10892)
 [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
-**Unlocks few-step generation in discrete diffusion-LLMs via the underlying Guassian diffusion.**
+**Unlocks few-step generation in discrete diffusion-LLMs via the underlying Gaussian diffusion.**
 
 <div align="center">
   <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
 </div>
 
-## [Chapter II:](https://openreview.net/forum?id=RSIoYWIzaP) $\Psi$[-Samplers and Efficient Curriculum (ICLR 2026)](https://openreview.net/forum?id=RSIoYWIzaP)
+## [Chapter II: $\Psi$-Samplers and Efficient Curriculum (ICLR 2026)](https://openreview.net/forum?id=RSIoYWIzaP)
 By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.caglar.ai),
 [Subham Sekhar Sahoo](https://s-sahoo.github.io)
 
@@ -29,9 +43,11 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 
 **Uniform-state beats Masked diffusion on text and image generation!**
 
-In this repo, we release:
+# What's Included
+
+This repo contains:
 * **The Duo / $\text{Duo}^\text{++}$ framework**
-  1. $\Psi$-sampler. [Example TODO](#psi-sampler) 
+  1. Sampling with ancestral, ReMDM and $\Psi$-samplers [Example](#sampling) 
   2. Curriculum learning strategy to speed up training. [[Example]](#training)
   3. Discrete Consistency Distillation pipeline. [[Example]](#distillation)
   4. Greedy-tail sampler. [[Example]](#sampling)
@@ -39,7 +55,7 @@ In this repo, we release:
   1. Autoregressive Model.
   2. [MDLM](https://arxiv.org/abs/2406.07524): Sahoo et al., "Simple and Effective Masked Diffusion Language Model", NeurIPS 2024.
   3. [SEDD (absorb)](https://arxiv.org/abs/2310.16834): Lou et al., "Score Entropy Based Discrete Diffusion", ICML 2024.
-  4. [D3PM (absorb)](https://arxiv.org/abs/2107.03006) Austin et al., "Structured Denoising Diffusion Models in Discrete State-Spaces", NeurIPS 2021.
+  4. [D3PM (absorb)](https://arxiv.org/abs/2107.03006): Austin et al., "Structured Denoising Diffusion Models in Discrete State-Spaces", NeurIPS 2021.
 
 <!-- <a name="code-organization"></a>
 ## Code Organization
@@ -52,10 +68,8 @@ In this repo, we release:
 7. ```configs/```: Config files for datasets/denoising networks/noise schedules/LR schedules.
 8. ```scripts/```: Shell scripts for training/evaluation. -->
 
-
-<a name="getting_started"></a>
-
 # Getting Started
+<a name="getting_started"></a>
 
 To get started, create a conda environment containing the required dependencies.
 
@@ -67,18 +81,23 @@ pip install -r requirements.txt
 pip install flash_attn==2.7.4.post1
 ```
 
-### Checkpoints
+# Checkpoints
+<a name="checkpoints"></a>
 
-* Language Generation: Trained on OpenWebText for `1M` training steps (distilled / base):
+* **Duo** (Language Modeling): Trained on OpenWebText for `1M` training steps (distilled / base):
   * [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
   * [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
-* Image Generation: Trained on CIFAR-10
-  * To be released on March 1st, 2026!
+* **Duo** (Image Modeling): Trained on CIFAR-10
+  * [Huggingface (contains the raw checkpoints)](https://huggingface.co/jdeschena/duo2-cifar10)
+* **Baselines** (SEDD, MDLM, AR): Trained on OpenWebText
+  * [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing) — download `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt`.
 
 # Training
 <a name="training"></a>
 
-To train $\text{Duo}^\text{++}$ use the following scripts:
+This repo implements the original Duo curriculum, as well as the fast $\text{Duo}^\text{++}$ curriculum. By default, the training scripts use the original curriculum. To enable the efficient curriculum, simply replace `algo.curriculum.mode=simple` by `algo.curriculum.mode=poly9` (see comments in each training script).
+
+To train $\text{Duo}^\text{++}$, use the following scripts:
 * LM1B
   * w/ sentencepacking (same as in D3PM)
     * Training script: [`scripts/train_lm1b_duo_sentencepacking.sh`](./scripts/train_lm1b_duo_sentencepacking.sh)
@@ -88,30 +107,34 @@ To train $\text{Duo}^\text{++}$ use the following scripts:
     * [Wandb run](https://api.wandb.ai/links/sahoo-diffusion/lkv5z3tm)
     
 * OWT: [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
-* CIFAR-10: `TODO`
+* CIFAR-10:
+  * Duo: [`scripts/train_cifar10_duo_cosine.sh`](./scripts/train_cifar10_duo_cosine.sh)
+  * MDLM: [`scripts/train_cifar10_mdlm_cosine.sh`](./scripts/train_cifar10_mdlm_cosine.sh)
+  * Both scripts default to a cosine noise schedule. To use log-linear instead, set `noise=log-linear`.
 
-Notes:
-* Run `mkdir watch_folder` to create a directory to store slurm logs
-and then run any script in [`scripts/`](scripts) as a slurm job: `sbatch scripts/ABC_XYZ.sh`
+**Notes:**
+* Run `mkdir watch_folder` to create a directory to store slurm logs,
+  and then run any script in [`scripts/`](scripts) as a slurm job: `sbatch scripts/ABC_XYZ.sh`
 * Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
 # Distillation
 <a name="distillation"></a>
 
-To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh) `TODO`
+To distill a model using the Discrete Consistency Distillation (`Alg. 1` in the Duo paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh).
 
 
 # Sampling & Eval
 <a name="sampling"></a>
-To compute test perplexity on the validtion set of OWT use [`scripts/eval_owt_duo.sh`](scripts/eval_owt_duo.sh) and for zero shot perplexities use [`scripts/zero_shot_duo.sh`](scripts/zero_shot_duo.sh).
 
+## Likelihood
+To compute test perplexity on the validation set of OWT use [`scripts/eval_owt_duo.sh`](scripts/eval_owt_duo.sh) and for zero shot perplexities use [`scripts/zero_shot_duo.sh`](scripts/zero_shot_duo.sh).
 
-To generate samples from a pre-trained model use one of the following command.
-Set 
-* `sampling.noise_removal=greedy` to use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper).
-* `sampling.noise_removal=ancestral` for the standard ancestral sampling. This produces more diverse samples (higher entropy) but with worse generative perplexity.
+## Sampling
+You can sample with ancestral sampling using the scripts in [`scripts/gen_ppl_*.sh`](scripts/). To sample with the PC samplers such as ReMDM and our $\Psi$-samplers, use the scripts in [`scripts/psi_samplers`](scripts/psi_samplers). This directory contains examples for sampling text and images.
 
-We have realease the distilled model `s-sahoo/duo-distilled` and the un-distilled model `s-sahoo/duo` on [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗. To sample from a HF model, run the following command:
+To use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper), set `sampling.noise_removal=greedy`. Using the default `sampling.noise_removal=ancestral` will produce more diverse samples (higher entropy) but with worse generative perplexity.
+
+To sample from a HuggingFace model, run the following command:
 ```bash
 python main.py \
   mode=sample_eval \
@@ -126,12 +149,13 @@ python main.py \
   sampling.noise_removal=greedy \
   +wandb.offline=true 
 ```
-We’ve also released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT in this [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh) while specifying the paths correctly.
+
+To use the example scripts with raw checkpoints (see [Checkpoints](#checkpoints)), download them and set the checkpoint path in the script.
 
 
 # Baselines
 <a name="baselines"></a>
-We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenWebText in this [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing). Download the checkpoints: `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt` and specify the paths appropriately in the respective shell scripts:
+Download the baseline checkpoints (see [Checkpoints](#checkpoints)) and specify the paths appropriately in the respective shell scripts:
 * [`scripts/eval_owt_*.sh`](scripts/) for computing validation perplexity on OWT.
 * [`scripts/gen_ppl_*.sh`](scripts/) for generating text samples and evaluating them.
 * [`scripts/zero_shot_*.sh`](scripts/) for computing zero shot perplexities.

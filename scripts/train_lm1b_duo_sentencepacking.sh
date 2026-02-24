@@ -15,7 +15,7 @@
 
 # To enable preemption re-loading, set `hydra.run.dir` or 
 # `checkpointing.save_dir` explicitly.
-# Note: we use mode=poly9 in the duo2 paper for speed
+# Note: we use algo.curriculum.mode=poly9  in the duo2 paper for speed
 srun python -u -m main \
   loader.batch_size=64 \
   loader.eval_batch_size=64 \
