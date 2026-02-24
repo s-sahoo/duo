@@ -12,7 +12,7 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://arxiv.org/abs/2506.10892)
 [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)
 
-**We unlock few-step generation in discrete diffusion language models via the underlying Guassian diffusion.**
+> **Unlocks few-step generation in discrete diffusion-LLMs via the underlying Guassian diffusion.**
 
 <div align="center">
   <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
@@ -26,7 +26,7 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 [![deploy](https://img.shields.io/badge/Blog%20%20-8A2BE2)](http://s-sahoo.github.io/duo-ch2)
 [![arXiv](https://img.shields.io/badge/arXiv-2406.07524-red.svg)](https://openreview.net/forum?id=RSIoYWIzaP)
 <!-- [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875) -->
-**Uniform-state beats Masked diffusion on text and image generation!**
+> **Uniform-state beats Masked diffusion on text and image generation!**
 
 In this repo, we release:
 * **The Duo / $\text{Duo}^\text{++}$ framework**
