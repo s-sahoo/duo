@@ -1,8 +1,6 @@
 # The Diffusion Duality Series
 
-This repository contains the code for the two papers in the Diffusion Duality series.
-
-This repo includes:
+This repository contains the code for the two papers in the Diffusion Duality series. It includes:
 - **Duo / $\text{Duo}^\text{++}$** sampling (ancestral, ReMDM, $\Psi$-samplers, greedy-tail) — [Sampling & Eval](#sampling--eval)
 - Original and efficient curriculum training strategies — [Training](#training)
 - Discrete Consistency Distillation (DCD) — [Distillation](#discrete-consistency-distillation)
