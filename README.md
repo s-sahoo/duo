@@ -2,17 +2,13 @@
 
 This repository contains the code for the two papers in the Diffusion Duality series.
 
-## Table of Contents
-- [Chapter I (ICML 2025)](#chapter-i-icml-2025)
-- [Chapter II (ICLR 2026)](#chapter-ii-psi-samplers-and-efficient-curriculum-iclr-2026)
-- [What's Included](#whats-included)
-- [Getting Started](#getting-started)
-- [Checkpoints](#checkpoints)
-- [Training](#training)
-- [Distillation](#distillation)
-- [Sampling & Eval](#sampling--eval)
-- [Baselines](#baselines)
-- [Acknowledgements & Citation](#acknowledgements--citation)
+This repo includes:
+- **Duo / $\text{Duo}^\text{++}$** sampling (ancestral, ReMDM, $\Psi$-samplers, greedy-tail) — [Sampling & Eval](#sampling--eval)
+- Original and efficient curriculum training strategies — [Training](#training)
+- Discrete Consistency Distillation (DCD) — [Distillation](#discrete-consistency-distillation)
+- Baselines (AR, MDLM, SEDD, D3PM) — [Baselines](#baselines)
+
+[Getting Started](#getting-started) | [Checkpoints](#checkpoints) | [Citation](#acknowledgements--citation)
 
 ## [Chapter I (ICML 2025)](https://arxiv.org/abs/2506.10892)
 
@@ -43,30 +39,7 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 
 **Uniform-state beats Masked diffusion on text and image generation!**
 
-# What's Included
 
-This repo contains:
-* **The Duo / $\text{Duo}^\text{++}$ framework**
-  1. Sampling with ancestral, ReMDM and $\Psi$-samplers [Example](#sampling) 
-  2. Curriculum learning strategy to speed up training. [[Example]](#training)
-  3. Discrete Consistency Distillation pipeline. [[Example]](#distillation)
-  4. Greedy-tail sampler. [[Example]](#sampling)
-* **Baseline implementations** [[Examples]](#baselines):
-  1. Autoregressive Model.
-  2. [MDLM](https://arxiv.org/abs/2406.07524): Sahoo et al., "Simple and Effective Masked Diffusion Language Model", NeurIPS 2024.
-  3. [SEDD (absorb)](https://arxiv.org/abs/2310.16834): Lou et al., "Score Entropy Based Discrete Diffusion", ICML 2024.
-  4. [D3PM (absorb)](https://arxiv.org/abs/2107.03006): Austin et al., "Structured Denoising Diffusion Models in Discrete State-Spaces", NeurIPS 2021.
-
-<!-- <a name="code-organization"></a>
-## Code Organization
-1. ```main.py```: The main entry point for training / eval.
-2. ```trainer_base.py```: Boiler plate trainer using pytorch lightning.
-3. ```algo.py```: Algorithms such as DUO, MDLM, AR, SEDD, D3PM.
-4. ```dataloader.py```: Dataloaders.
-5. ```utils.py```: LR scheduler, logging, `fsspec` handling.
-6. ```models/```: Denoising network architectures. Supports [DiT](https://arxiv.org/abs/2212.09748) and AR transformer.
-7. ```configs/```: Config files for datasets/denoising networks/noise schedules/LR schedules.
-8. ```scripts/```: Shell scripts for training/evaluation. -->
 
 # Getting Started
 <a name="getting_started"></a>
@@ -117,7 +90,7 @@ To train $\text{Duo}^\text{++}$, use the following scripts:
   and then run any script in [`scripts/`](scripts) as a slurm job: `sbatch scripts/ABC_XYZ.sh`
 * Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
-# Distillation
+# Discrete Consistency Distillation
 <a name="distillation"></a>
 
 To distill a model using the Discrete Consistency Distillation (`Alg. 1` in the Duo paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh).
@@ -134,7 +107,7 @@ You can sample with ancestral sampling using the scripts in [`scripts/gen_ppl_*.
 
 To use the "Greedy-tail sampler" (equivalent to nucleus sampling in AR models; see `Sec. 4.2` in the paper), set `sampling.noise_removal=greedy`. Using the default `sampling.noise_removal=ancestral` will produce more diverse samples (higher entropy) but with worse generative perplexity.
 
-To sample from a HuggingFace model, run the following command:
+To sample from a HuggingFace checkpoint (text only), run the following command:
 ```bash
 python main.py \
   mode=sample_eval \
@@ -152,7 +125,6 @@ python main.py \
 
 To use the example scripts with raw checkpoints (see [Checkpoints](#checkpoints)), download them and set the checkpoint path in the script.
 
-
 # Baselines
 <a name="baselines"></a>
 Download the baseline checkpoints (see [Checkpoints](#checkpoints)) and specify the paths appropriately in the respective shell scripts:
@@ -162,7 +134,7 @@ Download the baseline checkpoints (see [Checkpoints](#checkpoints)) and specify 
 * [`scripts/train_*.sh`](scripts/) for training the models.
 
 # Acknowledgements & Citation
-This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our paper using:
+This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our papers using:
 ```
 @inproceedings{
     sahoo2025the,
