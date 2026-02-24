@@ -29,6 +29,10 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 
 **Uniform-state beats Masked diffusion on text and image generation!**
 
+<div align="center">
+  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure-subham.png" width="60%">
+</div>
+
 In this repo, we release:
 * **The Duo / $\text{Duo}^\text{++}$ framework**
   1. $\Psi$-sampler. [Example TODO](#psi-sampler) 
@@ -41,16 +45,7 @@ In this repo, we release:
   3. [SEDD (absorb)](https://arxiv.org/abs/2310.16834): Lou et al., "Score Entropy Based Discrete Diffusion", ICML 2024.
   4. [D3PM (absorb)](https://arxiv.org/abs/2107.03006) Austin et al., "Structured Denoising Diffusion Models in Discrete State-Spaces", NeurIPS 2021.
 
-<!-- <a name="code-organization"></a>
-## Code Organization
-1. ```main.py```: The main entry point for training / eval.
-2. ```trainer_base.py```: Boiler plate trainer using pytorch lightning.
-3. ```algo.py```: Algorithms such as DUO, MDLM, AR, SEDD, D3PM.
-4. ```dataloader.py```: Dataloaders.
-5. ```utils.py```: LR scheduler, logging, `fsspec` handling.
-6. ```models/```: Denoising network architectures. Supports [DiT](https://arxiv.org/abs/2212.09748) and AR transformer.
-7. ```configs/```: Config files for datasets/denoising networks/noise schedules/LR schedules.
-8. ```scripts/```: Shell scripts for training/evaluation. -->
+
 
 
 <a name="getting_started"></a>
@@ -95,10 +90,10 @@ Notes:
 and then run any script in [`scripts/`](scripts) as a slurm job: `sbatch scripts/ABC_XYZ.sh`
 * Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
-# Distillation
+# Discrete Consistency Distillation
 <a name="distillation"></a>
 
-To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh) `TODO`
+To distil a model using the Discrete Consisitency Distillation (`Alg. 1`, [The Diffusion Duality]((https://arxiv.org/abs/2506.10892))), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh) `TODO`
 
 
 # Sampling & Eval
@@ -128,7 +123,6 @@ python main.py \
 ```
 We’ve also released checkpoints for the distilled `duo-distilled.ckpt` and the un-distilled model `duo.ckpt` trained on OWT in this [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link). Download them and use the command in [`scripts/gen_ppl_owt_duo.sh`](scripts/gen_ppl_owt_duo.sh) while specifying the paths correctly.
 
-
 # Baselines
 <a name="baselines"></a>
 We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenWebText in this [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing). Download the checkpoints: `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt` and specify the paths appropriately in the respective shell scripts:
@@ -138,7 +132,7 @@ We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenW
 * [`scripts/train_*.sh`](scripts/) for training the models.
 
 # Acknowledgements & Citation
-This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our paper using:
+This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our papers using:
 ```
 @inproceedings{
     sahoo2025the,
