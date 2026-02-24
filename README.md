@@ -69,16 +69,11 @@ pip install flash_attn==2.7.4.post1
 
 ### Checkpoints
 
-The checkpoints for the DUO models (distilled/undistilled) trained on OpenWebText for 1M training steps are available on:
-* [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
-* [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
-
-### Slurm scripts
-Run `mkdir watch_folder` to create a directory to store slurm logs
-and then run any script in [`scripts/`](scripts) as a slurm job:
-```bash
-sbatch scripts/ABC_XYZ.sh
-```
+* Language Generation: Trained on OpenWebText for `1M` training steps (distilled / base):
+  * [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
+  * [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
+* Image Generation: Trained on CIFAR-10
+  * To be released on March 1st, 2026!
 
 # Training
 <a name="training"></a>
@@ -93,25 +88,17 @@ To train $\text{Duo}^\text{++}$ use the following scripts:
     * [Wandb run](https://api.wandb.ai/links/sahoo-diffusion/lkv5z3tm)
     
 * OWT: [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh).
+* CIFAR-10: `TODO`
 
-
-**Curriculum Learning increases memory consumption.** For faster training on OWT, one may consider a two-stage approach:
-* `Stage 1`: Curriculum Learning for `500K` steps
-  * Use [`scripts/train_owt_duo.sh`](./scripts/train_owt_duo.sh) with the following modifications:
-    * Reduced batch size (`loader.batch_size=32` on an `80 GB` GPU)
-    * `trainer.max_steps=500000` 
-* `Stage 2`: Finetuning the checkpoint from `stage 1` for `500K` more steps
-  * Training script: [`scripts/train_owt_duo_finetune.sh`](scripts/train_owt_duo_finetune.sh)
-  * Features a larger batch size (`loader.batch_size=64` on an `80 GB`) than `stage 1`.
-  * [Wandb run](https://api.wandb.ai/links/kuleshov-group/h74aekb3): This run resumes training a `stage 1` checkpoint. Although trained for `1M` steps, the results reported in the paper correspond to the checkpoint at `500K` steps.
-
-Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
+Notes:
+* Run `mkdir watch_folder` to create a directory to store slurm logs
+and then run any script in [`scripts/`](scripts) as a slurm job: `sbatch scripts/ABC_XYZ.sh`
+* Control the batch size per GPU using the argument `loader.batch_size`. If `loader.batch_size * num_gpus < loader.global_batch_size`, PyTorch Lightning resorts to gradient accumulation. 
 
 # Distillation
 <a name="distillation"></a>
 
-To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh)
-
+To distil a model using the Discrete Consisitency Distillation (`Alg. 1` in the paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh) `TODO`
 
 
 # Sampling & Eval
@@ -154,11 +141,20 @@ We release the checkpoints for the baselines: SEDD, MDLM and AR trained on OpenW
 This repository was built off of [MDLM's Github repository](https://github.com/kuleshov-group/mdlm). Cite our paper using:
 ```
 @inproceedings{
-sahoo2025the,
-title={The Diffusion Duality},
-author={Subham Sekhar Sahoo and Justin Deschenaux and Aaron Gokaslan and Guanghan Wang and Justin T Chiu and Volodymyr Kuleshov},
-booktitle={Forty-second International Conference on Machine Learning},
-year={2025},
-url={https://openreview.net/forum?id=9P9Y8FOSOk}
+    sahoo2025the,
+    title={The Diffusion Duality},
+    author={Subham Sekhar Sahoo and Justin Deschenaux and Aaron Gokaslan and Guanghan Wang and Justin T Chiu and Volodymyr Kuleshov},
+    booktitle={Forty-second International Conference on Machine Learning},
+    year={2025},
+    url={https://openreview.net/forum?id=9P9Y8FOSOk}
+}
+
+@inproceedings{
+    deschenaux2026the,
+    title={The Diffusion Duality, Chapter {II}: \${\textbackslash}Psi\$-Samplers and Efficient Curriculum},
+    author={Justin Deschenaux and Caglar Gulcehre and Subham Sekhar Sahoo},
+    booktitle={The Fourteenth International Conference on Learning Representations},
+    year={2026},
+    url={https://openreview.net/forum?id=RSIoYWIzaP}
 }
 ```
