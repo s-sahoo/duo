@@ -1,12 +1,8 @@
+<div align="center">
+
 # The Diffusion Duality Series
 
-This repository contains the code for the two papers in the Diffusion Duality series. It includes:
-- **Duo / $\text{Duo}^\text{++}$** sampling (ancestral, ReMDM, $\Psi$-samplers, greedy-tail) — [Sampling & Eval](#sampling--eval)
-- Original and efficient curriculum training strategies — [Training](#training)
-- Discrete Consistency Distillation (DCD) — [Distillation](#discrete-consistency-distillation)
-- Baselines (AR, MDLM, SEDD, D3PM) — [Baselines](#baselines)
-
-[Getting Started](#getting-started) | [Checkpoints](#checkpoints) | [Citation](#acknowledgements--citation)
+</div>
 
 ## [Chapter I (ICML 2025)](https://arxiv.org/abs/2506.10892)
 
@@ -36,8 +32,17 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 <!-- [![deploy](https://img.shields.io/badge/🤗-Huggingface-blue)](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875) -->
 
 **Uniform-state beats Masked diffusion on text and image generation!**
+<div align="center">
+  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure.png" width="60%">
+</div>
 
+This repository contains the code for the two papers in the Diffusion Duality series. It includes:
+- **Duo / $\text{Duo}^\text{++}$** sampling (ancestral, ReMDM, $\Psi$-samplers, greedy-tail) — [Sampling & Eval](#sampling--eval)
+- Original and efficient curriculum training strategies — [Training](#training)
+- Discrete Consistency Distillation (DCD) — [Distillation](#discrete-consistency-distillation)
+- Baselines (AR, MDLM, SEDD, D3PM) — [Baselines](#baselines)
 
+[Getting Started](#getting-started) | [Checkpoints](#checkpoints) | [Citation](#acknowledgements--citation)
 
 # Getting Started
 <a name="getting_started"></a>
