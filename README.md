@@ -19,7 +19,7 @@ By [Subham Sekhar Sahoo](https://s-sahoo.github.io), [Justin Deschenaux](https:/
 **Unlocks few-step generation in discrete diffusion-LLMs via the underlying Gaussian diffusion.**
 
 <div align="center">
-  <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="90%">
+  <img src="https://github.com/s-sahoo/duo/blob/gh-pages/static/images/duo_schematic.png" width="60%">
 </div>
 
 ## [Chapter II: Ψ-Samplers and Efficient Curriculum (ICLR 2026)](https://openreview.net/forum?id=RSIoYWIzaP)
@@ -33,7 +33,7 @@ By  [Justin Deschenaux](https://jdeschena.com), [Caglar Gulcehre](https://www.ca
 
 **Uniform-state beats Masked diffusion on text and image generation!**
 <div align="center">
-  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure.png" width="60%">
+  <img src="https://github.com/s-sahoo/duo-ch2/blob/gh-pages/static/images/psi-samplers-figure.png" width="90%">
 </div>
 
 This repository contains the code for the two papers in the Diffusion Duality series. It includes:
