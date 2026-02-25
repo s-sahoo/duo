@@ -96,7 +96,7 @@ To train $\text{Duo}^\text{++}$, use the following scripts:
 # Discrete Consistency Distillation
 <a name="distillation"></a>
 
-To distill a model using the Discrete Consistency Distillation (`Alg. 1` in the Duo paper), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh).
+To distill a model using the Discrete Consistency Distillation (`Alg. 1` in the [Duo paper](https://arxiv.org/abs/2506.10892)), use [`scripts/distil_owt.sh`](scripts/distil_owt.sh).
 
 
 # Sampling & Eval
