@@ -4,8 +4,8 @@ NUM_STEPS=256
 ETA=0.01
 NUCLEUS_P=0.9
 NOISE=log-linear
-CHECKPOINT_PATH=/claire-rcp-scratch/home/deschena/baselines/duo/61-1000000.ckpt
-DATA_CACHE_DIR=/claire-rcp-scratch/home/deschena/discrete_diff_base/data_cache
+CHECKPOINT_PATH=???
+DATA_CACHE_DIR=???
 EVAL_BATCH_SIZE=16
 NUM_SAMPLE_BATCHES=32
 
