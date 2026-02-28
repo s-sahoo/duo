@@ -1,6 +1,2 @@
 type: log-linear
-parameterization: log-linear
-eps: 0
-denoiser_latent_conditioning: -1
-freeze_encoder: False
-freeze_decoder: False
+eps: 1e-3

@@ -23,15 +23,40 @@ class Loss:
 
 
 class LogLinear(torch.nn.Module):
-  def __init__(self):
+  def __init__(self, eps):
     super().__init__()
-    self.eps = 1e-3  # To be consistent with SEDD: https://github.com/louaaron/Score-Entropy-Discrete-Diffusion/blob/0605786da5ccb5747545e26d66fdf477187598b6/noise_lib.py#L56
+    self.eps = eps # 1e-3 by default, to be consistent with SEDD: https://github.com/louaaron/Score-Entropy-Discrete-Diffusion/blob/0605786da5ccb5747545e26d66fdf477187598b6/noise_lib.py#L56
 
   def forward(self, t):
     t = (1 - self.eps) * t
     alpha_t = 1 - t 
-    dalpha_t = - (1 - self.eps)
+    dalpha_t = - torch.ones_like(alpha_t) * (1 - self.eps)
     return dalpha_t, alpha_t
+
+  def get_t_for_alpha(self, alpha_t):
+    return 1 - alpha_t
+
+
+class Cosine(torch.nn.Module):
+  def __init__(self, eps):
+    super().__init__()
+    self.eps = eps
+    self.half_pi = torch.pi / 2
+
+  def forward(self, t):
+    t = (1 - self.eps) * t
+    alpha_t = 1 - torch.cos(self.half_pi * (1 - t))
+    dalpha_t = - torch.sin(self.half_pi * (1 - t)) * self.half_pi
+    return dalpha_t, alpha_t
+
+  def get_t_for_alpha(self, alpha_t):
+    is_tensor = torch.is_tensor(alpha_t)
+    if not is_tensor:
+      alpha_t = torch.tensor([alpha_t])
+    t = 1 - 2 / torch.pi * torch.acos(1 - alpha_t)
+    if not is_tensor:
+      t = t.cpu().item()
+    return t
 
 
 def sample_categorical(categorical_probs):
@@ -73,6 +98,8 @@ class TrainerBase(L.LightningModule):
     if self.config.algo.backbone == 'dit':
       self.backbone = models.dit.DIT(
         self.config, vocab_size=self.vocab_size)
+    elif self.config.algo.backbone == 'unet':
+      self.backbone = models.unet.UNet(self.config, self.vocab_size)
     elif self.config.algo.backbone == 'dimamba':
       self.backbone = models.dimamba.DiMamba(
         self.config,
@@ -86,7 +113,16 @@ class TrainerBase(L.LightningModule):
     self.num_tokens = self.config.model.length
     self.p_nucleus = self.config.sampling.p_nucleus
     # Noise Schedule
-    self.noise = LogLinear()
+    if config.noise.type == 'log-linear':
+      self.noise = LogLinear(config.noise.eps)
+    elif config.noise.type == 'cosine':
+      self.noise = Cosine(config.noise.eps)
+    else:
+      raise ValueError(config.noise.type)
+    # Class-conditional training arguments
+    self.num_classes = config.data.get('num_classes', None)
+    self.class_conditional = self.num_classes is not None
+    self.class_cond_dropout = config.training.class_dropout_p 
 
     self.metrics = metrics.Metrics(
       gen_ppl_eval_model_name_or_path=\
@@ -109,7 +145,8 @@ class TrainerBase(L.LightningModule):
     self.fast_forward_batches = None
 
   def _validate_configuration(self):
-    assert self.config.algo.backbone in {'dit', 'hf_dit'}
+    assert self.config.algo.backbone in {'dit', 'hf_dit', 
+                                         'unet'}
     if self.config.algo.parameterization == 'ar':
       assert not self.config.algo.time_conditioning
       assert self.config.prior.type == 'none'
@@ -244,7 +281,7 @@ class TrainerBase(L.LightningModule):
   def _process_model_output(self, model_output, xt, sigma):
     raise NotImplementedError
 
-  def forward(self, xt, sigma, weights=None,
+  def forward(self, xt, sigma, labels, weights=None,
               nn_input_idxs=None):
     if nn_input_idxs is None:
       nn_input_idxs = xt
@@ -252,7 +289,8 @@ class TrainerBase(L.LightningModule):
     sigma = self._process_sigma(sigma)
     with torch.amp.autocast('cuda', dtype=torch.float32):
       model_output = self.backbone(
-        x=nn_input_idxs, sigma=sigma, weights=weights)
+        x=nn_input_idxs, sigma=sigma, class_cond=labels, 
+        weights=weights)
     return self._process_model_output(
       model_output=model_output, xt=xt, sigma=sigma)
 
@@ -265,6 +303,7 @@ class TrainerBase(L.LightningModule):
     current_accumulation_step = (
       batch_idx % self.trainer.accumulate_grad_batches)
     losses = self._loss(batch['input_ids'],
+                        batch.get('labels', None),
                         batch['attention_mask'],
                         current_accumulation_step,
                         train_mode=True)
@@ -291,6 +330,7 @@ class TrainerBase(L.LightningModule):
   def validation_step(self, batch, batch_idx):
     del batch_idx
     losses = self._loss(batch['input_ids'],
+                        batch.get('labels', None),
                         batch['attention_mask'])
     self.metrics.update_valid(losses.nlls, losses.prior_loss,
                               losses.num_tokens)
@@ -372,17 +412,17 @@ class TrainerBase(L.LightningModule):
   def _process_model_input(self, x0, valid_tokens):
     raise NotImplementedError
 
-  def nll(self, input_tokens, output_tokens,
+  def nll(self, input_tokens, labels, output_tokens,
           current_accumulation_step=None, train_mode=False):
     raise NotImplementedError
 
-  def _loss(self, x0, valid_tokens,
+  def _loss(self, x0, labels, valid_tokens,
             current_accumulation_step=None,
             train_mode=False):
     (input_tokens, output_tokens,
      valid_tokens) = self._process_model_input(
        x0, valid_tokens)
-    loss = self.nll(input_tokens, output_tokens,
+    loss = self.nll(input_tokens, labels, output_tokens,
                     current_accumulation_step, train_mode)
     assert loss.ndim == 2
     if self.ignore_bos:
@@ -457,7 +497,7 @@ class Diffusion(TrainerBase):
                     dalpha_t, low_var):
     raise NotImplementedError
 
-  def nll(self, x0, output_tokens,
+  def nll(self, x0, labels, output_tokens,
           current_accumulation_step=None, train_mode=False):
     del output_tokens
     t = self._sample_t(x0.shape[0],
@@ -471,11 +511,23 @@ class Diffusion(TrainerBase):
     
     dalpha_t, alpha_t = self.noise(t)
     alpha_t = alpha_t.unsqueeze(-1)
+    dalpha_t = dalpha_t.unsqueeze(-1)
     assert alpha_t.ndim == 2
+    assert dalpha_t.ndim == 2
     sigma = self._sigma_from_alphat(alpha_t)
 
     xt = self.q_xt(x0, alpha_t)
-    log_x_theta = self.forward(xt, sigma=sigma)
+    # Handle class-conditional training, with class dropout
+    if self.class_conditional:
+      assert labels is not None
+      rand = torch.rand(size=labels.shape, dtype=torch.float32, 
+                      device=self.device)
+      # num_classes represent the absence of class-conditioning
+      labels = torch.where(rand < self.class_cond_dropout, 
+                           self.num_classes, labels)
+    else:
+      assert labels is None
+    log_x_theta = self.forward(xt, sigma=sigma, labels=labels)
     utils.print_nans(log_x_theta, 'model_output')
     return self.nll_per_token(
       log_x_theta=log_x_theta,
@@ -495,38 +547,241 @@ class Diffusion(TrainerBase):
   def _analytic_update(self, x, t, dt):
     raise NotImplementedError
 
-  def _ancestral_update(self, x, t, dt, p_x0, noise_removal_step):
+  def _posterior_from_x0(self, x0, xt, alpha_s, alpha_t):
+    """From the clean x0, or denoiser predictions, implement 
+    the mathematical expression for q(z_s | z_t, x)"""
     raise NotImplementedError
 
+  def _forward_process(self, q_x0, alpha_s):
+    """Apply forward noising: q(x_s | x_0), where x_0 is a 
+       K-dimensional vector"""
+    raise NotImplementedError
+
+  def _get_ancestral_posterior(self, xt, sigma, labels, 
+                              alpha_s, alpha_t, p_x0):
+    """Top-level call from generate_samples. Compute the 
+       standard posterior sampling distribution from the 
+       noisy sequence xt"""
+    gamma = self.config.sampling.guid_weight
+    # If class cond but gamma is None or 0, same as sampling 
+    #  from the class unconditional case.
+    if not self.class_conditional or gamma in (None, 0.0):
+      if labels is not None:
+        labels = torch.full_like(labels, self.num_classes)
+      return self._get_posterior_from_xt(xt, sigma, labels, 
+                                         alpha_s, alpha_t, p_x0)
+    elif gamma == 1.0:  
+      # Simply sample from the cond. posterior only.
+      assert labels is not None
+      return self._get_posterior_from_xt(xt, sigma, labels, 
+                                         alpha_s, alpha_t, p_x0)
+    else:
+      # Case gamma not in {0, 1}, and class conditional 
+      #  -> mix conditional and unconditional predictions.
+      return self._get_guided_posterior_from_xt(self, xt,
+        sigma, labels, gamma, alpha_s, alpha_t, p_x0)
+
+  def _get_posterior_from_xt(self, xt, sigma, labels, alpha_s, 
+                             alpha_t, p_x0=None):
+    """From xt, compute a single denoiser predictions, cast 
+       to correct dtype, and call _posterior_from_x0."""
+    if p_x0 is None:
+      log_x0_pred = self.forward(xt, sigma, labels)
+
+      if self.config.sampling.use_float64:
+        log_x0_pred = log_x0_pred.to(torch.float64)
+
+      if self.p_nucleus < 1:
+        log_x0_pred = utils.top_k_top_p_filtering(
+          log_x0_pred, top_p=self.p_nucleus)
+      p_x0 = log_x0_pred.exp()
+
+    return p_x0, self._posterior_from_x0(x0=p_x0,xt=xt,
+      alpha_s=alpha_s, alpha_t=alpha_t)
+
+  def _get_guided_posterior_from_xt(self, xt, sigma, labels, 
+    gamma, alpha_s, alpha_t, p_x0=None):
+    """From xt, combine the class cond / uncond predictions 
+       of the denoiser. Call _get_posterior_from_xt."""
+    # unpack the cache
+    if p_x0 is None:
+      p_x0_cond = p_x0_uncond = None
+    else:
+      p_x0_cond, p_x0_uncond = p_x0
+    
+    p_x0_cond, cond_posterior = self._get_posterior_from_xt(
+      xt, sigma, labels, alpha_s, alpha_t, p_x0_cond)
+    log_cond_posterior = cond_posterior.log()
+    # NOTE: conditioning on self.num_classes represents the
+    #  class-unconditional predictions.
+    p_x0_uncond, uncond_posterior = self._get_posterior_from_xt(
+      xt, sigma, torch.full_like(labels, self.num_classes), 
+      alpha_s, alpha_t, p_x0_uncond)
+    log_uncond_posterior = uncond_posterior.log()
+
+    un_normalized_posterior = gamma * log_cond_posterior \
+                       + (1 - gamma) * log_uncond_posterior
+    # Handle cases where the posterior is zero (eg after 
+    #  nucleus sampling)
+    is_inf_mask = torch.logical_or(
+      log_cond_posterior.isinf(), log_uncond_posterior.isinf())
+    un_normalized_posterior[is_inf_mask] = self.neg_infinity
+    
+    return ((p_x0_cond, p_x0_uncond), 
+            un_normalized_posterior.softmax(-1))
+
+  def _ancestral_update(self, x, t, labels, dt, p_x0=None, 
+                        noise_removal_step=False):
+    _, alpha_t = self.noise(t)
+    if noise_removal_step:
+      alpha_s = torch.ones_like(alpha_t)
+    else:
+      _, alpha_s = self.noise(t - dt)
+    assert alpha_t.ndim == 2
+
+    sigma = self._sigma_from_alphat(alpha_t)
+    assert alpha_t.ndim == 2, f'{alpha_t.ndim=}'
+
+    p_x0, q_xs = self._get_ancestral_posterior(x, sigma, 
+      labels, alpha_s, alpha_t, p_x0)
+
+    return p_x0, sample_categorical(q_xs)
+
+  def _psi_update(self, x, t, labels, dt, kappa, p_x0=None,
+                  noise_removal_step=False):
+    _, alpha_t = self.noise(t)
+    if noise_removal_step:
+      alpha_s = torch.ones_like(alpha_t)
+    else:
+      _, alpha_s = self.noise(t - dt)
+    alpha_0 = torch.ones_like(alpha_t)
+    sigma = self._sigma_from_alphat(alpha_t)
+
+    # Standard posterior q(x_s | x_t)
+    p_x0, q_xs = self._get_ancestral_posterior(
+      x, sigma, labels, alpha_s, alpha_t, p_x0)
+
+    # Posterior targeting t=0, reuse predictions p_x0
+    _, q_x0 = self._get_ancestral_posterior(
+      x, sigma, labels, alpha_0, alpha_t, p_x0)
+
+    # PC: forward-noise q_x0 back to time s
+    pc_q_xs = self._forward_process(q_x0, alpha_s)
+
+    q_sample = kappa * q_xs + (1 - kappa) * pc_q_xs
+    return p_x0, sample_categorical(q_sample)
+
+  def _get_sampling_time_profile(self, eps, num_steps):
+    profile = self.config.sampling.psi.time_profile
+    num_steps += 1
+    if profile == 'linear' \
+      or self.config.sampling.predictor != 'psi':
+      # Default: linearly decrease
+      return torch.linspace(1, eps, num_steps)
+    if not profile.startswith('linear-constant-linear'):
+      raise ValueError(profile)
+    c = float(profile.split('-')[3])
+    if 'inv' in profile:
+      c = self.noise.get_t_for_alpha(c)
+    psi_cfg = self.config.sampling.psi
+    n_hi = round(psi_cfg.high_frac * num_steps)
+    n_mid = round(psi_cfg.middle_frac * num_steps)
+    return torch.cat([
+      torch.linspace(1, c, n_hi),
+      torch.full((n_mid,), c),
+      torch.linspace(c, eps, num_steps - n_hi - n_mid)])
+
+  def _mode_to_psi_kappas(self, mode, timesteps):
+    n = len(timesteps)
+    if mode == 'pure-posterior':
+      return torch.ones(n)
+    if mode == 'pure-pc':
+      return torch.zeros(n)
+
+    eta = float(mode.split('-')[-1])
+    if (mode.startswith('constant-')
+        and not mode.startswith('constant-remdm')):
+      return torch.full((n,), eta)
+
+    # Noise-schedule-dependent modes (ReMDM-like)
+    _, all_alphas = self.noise(timesteps)
+    alpha_t, alpha_s = all_alphas[:-1], all_alphas[1:]
+    eta_t = torch.tensor([eta])
+    if mode.startswith('max-capped-'):
+      sigma = torch.minimum(
+        eta_t.expand_as(alpha_t), (1 - alpha_s) / alpha_t)
+      sigma = torch.where(alpha_t == 0, eta, sigma)
+    elif mode.startswith('max-rescale-'):
+      sigma_max = torch.minimum(
+        eta_t.expand_as(alpha_t), (1 - alpha_s) / alpha_t)
+      sigma = torch.where(alpha_t > 0, sigma_max, 1) * eta
+    elif mode.startswith('constant-remdm'):
+      sigma = eta_t
+    else:
+      raise ValueError(mode)
+    kappas = torch.clip(1 - sigma / (1 - alpha_s), 0, 1)
+    if len(kappas) > 0:
+      kappas = torch.cat([kappas, torch.ones(1)])
+    return kappas
+
+  def _get_kappas(self, timesteps):
+    cfg = self.config.sampling.psi
+    n = len(timesteps)
+    n_hi = round(cfg.high_frac * n)
+    n_mid = round(cfg.middle_frac * n)
+    kappas = torch.cat([
+      self._mode_to_psi_kappas(cfg.high_mode, timesteps[:n_hi]),
+      self._mode_to_psi_kappas(cfg.middle_mode,
+        timesteps[n_hi:n_hi + n_mid]),
+      self._mode_to_psi_kappas(cfg.low_mode,
+        timesteps[n_hi + n_mid:])])
+    assert (kappas >= 0).all() and (kappas <= 1).all()
+    assert len(kappas) == n
+    return kappas
+
   @torch.no_grad()
-  def generate_samples(self, num_samples, num_steps=None,
-                       eps=1e-5):
+  def generate_samples(self, num_samples, labels=None,
+                       num_steps=None, eps=1e-5):
     """Generate samples from the model."""
     # Lightning auto-casting is not working in this method for some reason
     if num_steps is None:
       num_steps = self.config.sampling.steps
     x = self.prior_sample(num_samples, self.num_tokens)
-    timesteps = torch.linspace(
-      1, eps, num_steps + 1, device=self.device)
-    dt = (1 - eps) / num_steps
+    use_psi_sampler = self.config.sampling.predictor == 'psi'
+    timesteps = self._get_sampling_time_profile(eps, 
+                                                num_steps)
+    if use_psi_sampler:
+      kappas = self._get_kappas(timesteps).to(self.device)
+
     p_x0_cache = None
+    if labels is not None:
+      labels = labels.to(self.device)
 
     for i in range(num_steps):
       t = timesteps[i] * torch.ones(
         x.shape[0], 1, device=self.device)
+      dt = timesteps[i] - timesteps[i+1]
       if self.sampler == 'ancestral':
         _, x = self._ancestral_update(
-          x=x, t=t, dt=dt, p_x0=None)
+          x=x, t=t, labels=labels, dt=dt, p_x0=None)
       elif self.sampler == 'ancestral_cache':
         p_x0_cache, x_next = self._ancestral_update(
-          x=x, t=t, dt=dt, p_x0=p_x0_cache)
+          x=x, t=t, labels=labels, dt=dt, p_x0=p_x0_cache)
         if (not torch.allclose(x_next, x)
             or self.time_conditioning):
           # Disable caching
           p_x0_cache = None
         x = x_next
-      else:
+      elif self.sampler == 'psi':
+        _, x = self._psi_update(x=x, t=t, kappa=kappas[i],
+                                labels=labels, dt=dt, 
+                                p_x0=None)
+      elif self.sampler == 'analytic':
+        assert labels is None, 'class-conditional sampling ' \
+          'is not implemented with the analytic sampler'
         x = self._analytic_update(x=x,t=t, dt=dt)
+      else:
+        raise ValueError(self.sampler)
 
     t0 = timesteps[-1] * torch.ones(x.shape[0], 1,
                                     device=self.device)
@@ -534,9 +789,8 @@ class Diffusion(TrainerBase):
       if self.sampler == 'analytic':
         x = self._denoiser_update(x=x, t=t0)
       else:
-        _, x = self._ancestral_update(x=x, t=t0, dt=None,
-                                 p_x0=p_x0_cache,
-                                 noise_removal_step=True)
+        _, x = self._ancestral_update(x=x, t=t0, labels=labels,
+          dt=None, p_x0=p_x0_cache, noise_removal_step=True)
     elif self.config.sampling.noise_removal == 'greedy':
       sigma = self._sigma_from_alphat(self.noise(t0)[1])
       x = self.forward(xt=x, sigma=sigma).argmax(dim=-1)
@@ -648,24 +902,24 @@ class AbsorbingState(Diffusion):
     return self.mask_index * torch.ones(
       * batch_dims, dtype=torch.int64, device=self.device)
 
-  def _ancestral_update(self, x, t, dt, p_x0=None,
-                   noise_removal_step=False):
-    _, alpha_t = self.noise(t)
-    if noise_removal_step:
-      alpha_s = torch.ones_like(alpha_t)
-    else:
-      _, alpha_s = self.noise(t - dt)
-    assert alpha_t.ndim == 2
-    if p_x0 is None:
-      p_x0 = self.forward(
-        x, self._sigma_from_alphat(alpha_t)).exp()
-    
-    q_xs = p_x0 * (alpha_s - alpha_t)[:, :, None]
-    q_xs[:, :, self.mask_index] = 1 - alpha_s
-    _x = sample_categorical(q_xs)
-    
-    copy_flag = (x != self.mask_index).to(x.dtype)
-    return p_x0, copy_flag * x + (1 - copy_flag) * _x
+  def _posterior_from_x0(self, x0, xt, alpha_s, alpha_t):
+    """From the clean x0, or denoiser predictions, implement 
+    the mathematical expression for q(z_s | z_t, x)"""
+    assert x0.dtype == torch.float64, 'Requires float64 prec.'
+    # should be one-hot on clean tokens
+    orig_mask = xt[:, :, None] != self.mask_index
+    orig_mask = orig_mask.expand(-1, -1, x0.shape[-1])
+    orig_output_on_clean = x0[orig_mask]
+
+    q_xs = ((alpha_s - alpha_t) / (1 - alpha_t))[..., None] * x0
+    q_xs[..., self.mask_index] = (1 - alpha_s) / (1 - alpha_t)
+    q_xs[orig_mask] = orig_output_on_clean
+    return q_xs
+
+  def _forward_process(self, x0, alpha_s):
+    out = alpha_s[..., None] * x0
+    out[..., self.mask_index] = 1 - alpha_s
+    return out
 
   def _staggered_score(self, score, dsigma):
     score = score.clone()
@@ -713,6 +967,10 @@ class UniformState(Diffusion):
     assert self.parameterization == 'mean'
     if self.config.algo.name != 'distillation':
       assert self.T == 0
+
+  def _forward_process(self, x0, alpha_s):
+    return (alpha_s[..., None] * x0
+            + (1 - alpha_s[..., None]) / self.vocab_size)
 
   def q_xt(self, x, alpha_t):
     """Computes the noisy sample xt.

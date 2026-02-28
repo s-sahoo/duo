@@ -23,7 +23,7 @@ loader:
   pin_memory: True
 
 sampling:
-  predictor: ancestral  # ancestral_cache (only for MDLM), ancestral, analytic
+  predictor: ancestral  # ancestral_cache (only for MDLM), ancestral, analytic, psi (for psi-samplers)
   steps: 1000
   noise_removal: ancestral  # 'ancestral', 'greedy', 'none'
   use_float64: True
@@ -33,6 +33,21 @@ sampling:
   semi_ar: False
   stride_length: 1
   num_strides: 1
+  guid_weight: null  # null -> no classifier-free guidance 
+  psi:
+    time_profile: linear  # linear / linear-constant-linear-alpha / linear-constant-linear-alpha-inv
+    # Note: kappa = 1 -> pure posterior, kappa = 0 -> pure PC
+    # modes: pure-posterior / pure-pc / constant-eta / constant-remdm-eta / max-capped-eta / max-rescale-eta
+    high_mode: pure-posterior
+    middle_mode: pure-posterior
+    low_mode: pure-posterior
+    # Fraction of [0, 1] spent in the high / middle modes (the rest being in low mode)
+    # Example: high_frac=0.2, middle_frac=0.6. Then,
+    #  - For t in [1.0, 0.8] -> use high_mode
+    #  - For t in [0.8, 0.2] -> use middle_mode
+    #  - For t in [0.2, 0.0] -> use low_mode
+    high_frac: 0.2
+    middle_frac: 0.6
 
 training:
   ema: 0.9999
@@ -42,6 +57,7 @@ training:
   change_of_variables: False
   loss_precision: 'bf16'  # bf16, float32, float64
   finetune_path: ''
+  class_dropout_p: 0.1  # only used with class-conditional datasets (eg cifar10)
 
 eval:
   checkpoint_path: ''  # Used to evaluate a checkpoint after training.
@@ -74,6 +90,7 @@ trainer:
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
   limit_val_batches: 1.0     # validate on full dataset, can be used to toggle quick run
   val_check_interval: 5000
+  check_val_every_n_epoch: null  # Disable end-of-epoch validation. Instead, validate every trainer.val_check_interval steps.
 
 wandb:
   project: duo
