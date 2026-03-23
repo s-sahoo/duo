@@ -590,14 +590,14 @@ class DUO(DUO_BASE):
                           device=self.device)
     return alpha_t * x + sigma_t * epsilon
 
-  def nll(self, x0, output_tokens,
+  def nll(self, x0, labels, output_tokens,
           current_accumulation_step=None, train_mode=False):
     use_true_nll = (self.global_step > self.curriculum_end
                     or not train_mode)
     if use_true_nll:
-      return super().nll(x0, output_tokens,
+      return super().nll(x0, labels, output_tokens,
                          current_accumulation_step)
-    del output_tokens
+    del labels, output_tokens
     t = self._sample_t(x0.shape[0], current_accumulation_step)
     gamma_t = self.gamma_min + t * (self.gamma_max
                                     - self.gamma_min)
@@ -614,7 +614,7 @@ class DUO(DUO_BASE):
       xt = self._q_xt_gaussian(x0_one_hot, gamma_t)
       xt = xt * self._compute_gumbel_tau_inverse()
       xt_usdm = xt.argmax(-1)
-      log_x_theta = self.forward(xt, sigma=sigma)
+      log_x_theta = self.forward(xt, sigma=sigma, labels=None)
     else:  # Efficient variant
       softmax_approx, topk_indices, xt_usdm = \
         utils.sample_tempered_softmax_topk(
@@ -625,7 +625,8 @@ class DUO(DUO_BASE):
         k=self.config.algo.curriculum.top_k,
         vocab_size=self.vocab_size,
         inverse_temperature=self._compute_gumbel_tau_inverse())
-      log_x_theta = self.forward(topk_indices, sigma=sigma, 
+      log_x_theta = self.forward(topk_indices, sigma=sigma,
+                                 labels=None,
                                  weights=softmax_approx)
 
     return self.nll_per_token(log_x_theta=log_x_theta,
