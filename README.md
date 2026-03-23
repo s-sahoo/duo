@@ -54,7 +54,8 @@ conda create -n duo python=3.12
 conda activate duo
 conda install nvidia/label/cuda-12.4.0::cuda-toolkit
 pip install -r requirements.txt
-pip install flash_attn==2.7.4.post1
+# pip install flash_attn==2.7.4.post1
+TMPDIR=/tmp pip install flash_attn==2.7.4.post1 --no-build-isolation --cache-dir /tmp/pip-cache
 ```
 
 # Checkpoints

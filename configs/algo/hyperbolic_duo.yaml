@@ -1,0 +1,15 @@
+name: hyperbolic_duo
+backbone: dit
+parameterization: mean
+time_conditioning: True
+T: 0
+subs_masking: False
+causal_attention: False
+ignore_bos: False
+loss_type: elbo
+
+# Hyperbolic diffusion parameters
+hyper_dim: 32
+noise_euler_steps: 128
+lamb_factor: 0.25
+lamb_decay_exp: 0.05

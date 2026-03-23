@@ -2,7 +2,7 @@ train: ptb
 valid: ptb
 modality: text
 tokenizer_name_or_path: gpt2
-cache_dir: /share/kuleshov/ssahoo/textdiffusion/data
+cache_dir: /share/thickstun/sychou/.cache/huggingface/datasets
 wrap: True
 streaming: False
 insert_train_eos: True
