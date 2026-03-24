@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J duo-wikitext2               # Job name
+#SBATCH -J duo-ag-news               # Job name
 #SBATCH -o watch_folder/%x_%j.out     # output file (%j expands to jobID)
 #SBATCH -N 1                          # Total number of nodes requested
 #SBATCH --get-user-env                # retrieve the users login environment
@@ -13,24 +13,12 @@
 #SBATCH --open-mode=append            # Do not overwrite logs
 #SBATCH --requeue                     # Requeue upon pre-emption
 
-# To enable preemption re-loading, set `hydra.run.dir` or
-# `checkpointing.save_dir` explicitly.
-# Single A6000: batch_size=64 (seq_len=1024, GPT-2 vocab)
-# global_batch_size=512 with accumulate_grad_batches=8
-# Default model.length=1024 , but requires too many GPUs
+# DUO on ag_news, single A6000
 python -u -m main \
   loader.batch_size=64 \
   loader.eval_batch_size=64 \
-  data=wikitext2 \
-  wandb.name=duo-wikitext2 \
+  data=ag_news \
+  wandb.name=duo-ag-news-2 \
   model=small \
   algo=duo \
   model.length=128
-
-  # algo.curriculum.mode=simple \
-  # algo.curriculum.gumbel_tau_log10_start=-3.0 \
-  # algo.curriculum.gumbel_tau_log10_end=-3.0 \
-  # algo.curriculum.gamma_min=-3.55 \
-  # algo.curriculum.gamma_max=-1.85 \
-  # algo.curriculum.start=0 \
-  # algo.curriculum.end=500000

@@ -22,15 +22,14 @@ python -u -m main \
   loader.batch_size=64 \
   loader.eval_batch_size=64 \
   data=wikitext2 \
-  wandb.name=duo-wikitext2 \
+  wandb.name=duo-wikitext2-cl \
   model=small \
   algo=duo \
-  model.length=128
-
-  # algo.curriculum.mode=simple \
-  # algo.curriculum.gumbel_tau_log10_start=-3.0 \
-  # algo.curriculum.gumbel_tau_log10_end=-3.0 \
-  # algo.curriculum.gamma_min=-3.55 \
-  # algo.curriculum.gamma_max=-1.85 \
-  # algo.curriculum.start=0 \
-  # algo.curriculum.end=500000
+  model.length=128 \
+  algo.curriculum.mode=simple \
+  algo.curriculum.gumbel_tau_log10_start=-3.0 \
+  algo.curriculum.gumbel_tau_log10_end=-3.0 \
+  algo.curriculum.gamma_min=-3.5 \
+  algo.curriculum.gamma_max=-1.75 \
+  algo.curriculum.start=0 \
+  algo.curriculum.end=500000
