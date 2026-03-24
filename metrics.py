@@ -100,6 +100,16 @@ class Metrics:
     self.valid_nlls.reset()
     self.valid_aux.reset()
 
+  def reset_train(self):
+    self.train_nlls.reset()
+    self.train_aux.reset()
+
+  def reset_valid(self):
+    self.gen_ppl.reset()
+    self.sample_entropy.reset()
+    self.valid_nlls.reset()
+    self.valid_aux.reset()
+
   def update_train(self, nll, aux_loss, num_tokens):
     self.train_nlls.update(nll, num_tokens)
     self.train_aux.update(aux_loss, num_tokens)

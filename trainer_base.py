@@ -295,7 +295,7 @@ class TrainerBase(L.LightningModule):
       model_output=model_output, xt=xt, sigma=sigma)
 
   def on_train_epoch_start(self):
-    self.metrics.reset()
+    self.metrics.reset_train()
     assert self.metrics.train_nlls.nll.mean_value == 0
     assert self.metrics.train_nlls.nll.weight == 0
 
@@ -317,12 +317,12 @@ class TrainerBase(L.LightningModule):
     return losses.loss
 
   def on_train_epoch_end(self):
-    for k, v in self.metrics.valid_nlls.items():
+    for k, v in self.metrics.train_nlls.items():
       self.log(name=k, value=v.compute(), on_step=False,
                on_epoch=True, sync_dist=True)
 
   def on_validation_epoch_start(self):
-    self.metrics.reset()
+    self.metrics.reset_valid()
     self._eval_mode()
     assert self.metrics.valid_nlls.nll.mean_value == 0
     assert self.metrics.valid_nlls.nll.weight == 0

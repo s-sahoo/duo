@@ -9,7 +9,7 @@ ignore_bos: False
 loss_type: elbo
 
 # Hyperbolic diffusion parameters
-hyper_dim: 32
+trainset_path: /share/thickstun/sychou/workspace/research/duo/hyper_dataset/word_embedding/trainset_gpt2_wikitext2_ml256_bs32.pt
 noise_euler_steps: 128
 lamb_factor: 0.25
 lamb_decay_exp: 0.05
