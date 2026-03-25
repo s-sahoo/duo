@@ -281,7 +281,7 @@ class TrainerBase(L.LightningModule):
   def _process_model_output(self, model_output, xt, sigma):
     raise NotImplementedError
 
-  def forward(self, xt, sigma, labels, weights=None,
+  def forward(self, xt, sigma, labels=None, weights=None,
               nn_input_idxs=None):
     if nn_input_idxs is None:
       nn_input_idxs = xt
