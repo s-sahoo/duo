@@ -725,10 +725,10 @@ class Distillation(DUO):
     gamma_s = self.gamma_min + (
       t - dt) * (self.gamma_max - self.gamma_min)
 
-    usdm_alpha_t = self._gamma_to_alphat(gamma_t)
+    usdm_alpha_t = self._gamma_to_alphat_integral(gamma_t)
     usdm_alpha_t = usdm_alpha_t.unsqueeze(-1)
     assert usdm_alpha_t.ndim == 2
-    usdm_alpha_s = self._gamma_to_alphat(gamma_s)
+    usdm_alpha_s = self._gamma_to_alphat_integral(gamma_s)
     usdm_alpha_s = usdm_alpha_s.unsqueeze(-1)
     assert usdm_alpha_s.ndim == 2
 
