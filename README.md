@@ -62,11 +62,11 @@ pip install flash_attn==2.7.4.post1
 
 * **Duo** (Language Modeling): Trained on OpenWebText for `1M` training steps (distilled / base):
   * [Huggingface](https://huggingface.co/collections/s-sahoo/duo-67f9ff8fde919224e5fbd875)🤗.
-  * [Google Drive folder](https://drive.google.com/drive/folders/1JpqFM8XRvifwIkjWPfMyuDvu41r1yk0t?usp=share_link) as the HF checkpoints can't be finetuned.
+  * [Google Drive folder](https://drive.google.com/drive/folders/16ynR1QOWWkiRoDU0Y5NR-Ea99W5uhI0k?usp=sharing) as the HF checkpoints can't be finetuned.
 * **Duo** (Image Modeling): Trained on CIFAR-10
   * [Huggingface (contains the raw checkpoints)](https://huggingface.co/jdeschena/duo2-cifar10)
 * **Baselines** (SEDD, MDLM, AR): Trained on OpenWebText
-  * [Google Drive folder](https://drive.google.com/drive/folders/16LuuptK7Xfk-vzhQYZBZ0SA-B-BFluau?usp=sharing) — download `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt`.
+  * [Google Drive folder](https://drive.google.com/drive/folders/16ynR1QOWWkiRoDU0Y5NR-Ea99W5uhI0k?usp=sharing) — download `ar.ckpt`, `mdlm.ckpt`, `sedd.ckpt`.
 
 # Training
 <a name="training"></a>
